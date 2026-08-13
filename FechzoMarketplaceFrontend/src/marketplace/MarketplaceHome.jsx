@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCategories } from "../api/categoryApi";
-import CategoryCard from "../common/components/CategoryCard";
+import CategoryCard from "../components/common/CategoryCard";
 
 export default function MarketplaceHome() {
   const [categories, setCategories] = useState([]);
