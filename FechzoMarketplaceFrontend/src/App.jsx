@@ -4,18 +4,18 @@ import {
   Route
 } from "react-router-dom";
 
-import Header from "./common/components/Header";
-import CartPage from "./common/components/CartPage";
+import Header from "../src/components/common/Header";
+import CartPage from "../src/components/common/CartPage";
 import MarketplaceHome from "./marketplace/MarketplaceHome";
 
-import GroceryHome from "./grocery/GroceryHome";
-import GroceryProducts from "./grocery/GroceryProducts";
+import GroceryHome from "./components/grocery/GroceryHome";
+import GroceryProducts from "./components/grocery/GroceryProducts";
 
-import FashionHome from "./fashion/FashionHome";
-import FashionProducts from "./fashion/FashionProducts";
+import FashionHome from "./components/fashion/FashionHome";
+import FashionProducts from "./components/fashion/FashionProducts";
 
-import ElectronicsHome from "./electronics/ElectronicsHome";
-import ElectronicsProducts from "./electronics/ElectronicsProducts";
+import ElectronicsHome from "./components/electronics/ElectronicsHome";
+import ElectronicsProducts from "./components/electronics/ElectronicsProducts";
 
 export default function App() {
   return (

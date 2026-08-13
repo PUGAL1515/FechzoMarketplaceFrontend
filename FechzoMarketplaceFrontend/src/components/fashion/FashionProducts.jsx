@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getProducts } from "../api/productApi";
-import ProductCard from "../common/components/ProductCard";
+import { getProducts } from "../../api/productApi";
+import ProductCard from "../common/ProductCard";
 
 export default function FashionProducts() {
   const [products, setProducts] = useState([]);
