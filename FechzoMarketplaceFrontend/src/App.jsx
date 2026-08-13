@@ -16,6 +16,7 @@ import FashionProducts from "./components/fashion/FashionProducts";
 
 import ElectronicsHome from "./components/electronics/ElectronicsHome";
 import ElectronicsProducts from "./components/electronics/ElectronicsProducts";
+import StoreRegisterForm from "./pages/store/StoreRegisterForm";
 
 export default function App() {
   return (
@@ -62,6 +63,10 @@ export default function App() {
           <Route
             path="/cart"
             element={<CartPage />}
+          />
+          <Route
+            path="/register-store"
+            element={<StoreRegisterForm />}
           />
         </Routes>
       </main>
