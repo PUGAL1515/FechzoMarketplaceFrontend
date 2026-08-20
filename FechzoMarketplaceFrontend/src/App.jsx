@@ -17,6 +17,8 @@ import FashionProducts from "./components/fashion/FashionProducts";
 import ElectronicsHome from "./components/electronics/ElectronicsHome";
 import ElectronicsProducts from "./components/electronics/ElectronicsProducts";
 import StoreRegisterForm from "./pages/store/StoreRegisterForm";
+import StoreAdmin from "./pages/storeAdmin/StoreAdmin";
+import StoreLogin from "./pages/StoreAdmin/StoreLogin";
 
 export default function App() {
   return (
@@ -68,6 +70,15 @@ export default function App() {
             path="/register-store"
             element={<StoreRegisterForm />}
           />
+
+          <Route
+          path="/store-admin/dashboard"
+          element={<StoreAdmin/>}
+        />
+        <Route
+  path="/store-admin/login"
+  element={<StoreLogin />}
+/>
         </Routes>
       </main>
     </BrowserRouter>
