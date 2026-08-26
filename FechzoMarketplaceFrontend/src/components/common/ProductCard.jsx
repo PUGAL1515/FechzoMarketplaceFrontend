@@ -1,102 +1,110 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
-export default function ProductCard({
-  product,
-  category,
-}) {
+export default function ProductCard({ product, category }) {
   const { addToCart } = useCart();
 
-  const price =
-    product.discountPrice > 0
-      ? product.discountPrice
-      : product.price;
+  const hasDiscount =
+    product.discountPrice > 0 && product.discountPrice < product.price;
+
+  const displayPrice = hasDiscount ? product.discountPrice : product.price;
+
+  const discountPercent = hasDiscount
+    ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
+    : 0;
+
+  const isOutOfStock = !product.isAvailable || product.stock === 0;
 
   return (
-    <div className="group overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-
-      {/* PRODUCT IMAGE */}
-      <Link
-        to={`/${category}/product/${product._id}`}
-        className="block"
-      >
-        <div className="relative flex h-60 items-center justify-center overflow-hidden bg-gray-50">
-
+    <div className="group h-full flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-200 hover:shadow-md">
+      
+      {/* ========== IMAGE (Fixed Height) ========== */}
+      <Link to={`/${category}/product/${product._id}`} className="block">
+        <div className="relative w-full aspect-square bg-slate-50">
           {product.images?.[0] ? (
             <img
               src={product.images[0]}
               alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-contain p-3 group-hover:scale-[1.03] transition-transform duration-300"
+              loading="lazy"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
+            <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">
               No Image
             </div>
           )}
 
-          {/* DISCOUNT */}
-          {product.discountPrice > 0 &&
-            product.price > product.discountPrice && (
-              <span className="absolute left-3 top-3 rounded-md bg-[#154FCB] px-2.5 py-1 text-[11px] font-bold text-white">
-                {Math.round(
-                  ((product.price - product.discountPrice) /
-                    product.price) *
-                    100
-                )}
-                % OFF
-              </span>
-            )}
+          {/* Discount Badge */}
+          {hasDiscount && (
+            <div className="absolute top-2 left-2 bg-[#256fef] text-white text-[11px] font-bold px-1.5 py-0.5 rounded">
+              {discountPercent}% OFF
+            </div>
+          )}
 
+          {/* Out of Stock Overlay */}
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
+              <span className="bg-slate-800/90 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                Out of Stock
+              </span>
+            </div>
+          )}
         </div>
       </Link>
 
-      {/* PRODUCT INFO */}
-      <div className="p-4">
+      {/* ========== CONTENT (Flex grow for equal height) ========== */}
+      <div className="flex flex-col flex-1 p-3 pt-2.5">
+        
+        {/* Brand */}
+        <p className="text-[11px] text-slate-400 font-medium truncate h-4">
+          {product.brand || "\u00A0"}
+        </p>
 
-        {/* BRAND */}
-        {product.brand && (
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#154FCB]">
-            {product.brand}
-          </p>
-        )}
-
-        {/* PRODUCT NAME */}
-        <Link
-          to={`/${category}/product/${product._id}`}
-          className="no-underline"
-        >
-          <h3 className="line-clamp-2 min-h-[42px] text-sm font-semibold leading-5 text-gray-900 transition-colors group-hover:text-[#154FCB]">
+        {/* Product Name - Fixed 2 lines */}
+        <Link to={`/${category}/product/${product._id}`} className="mt-0.5">
+          <h3 className="text-[13px] font-medium text-slate-800 leading-snug line-clamp-2 h-[36px] hover:text-[#1e3a8a] transition-colors">
             {product.name}
           </h3>
         </Link>
 
-        {/* PRICE */}
-        <div className="mt-3 flex items-center gap-2">
+        {/* Unit */}
+        <p className="text-[12px] text-slate-500 mt-1 h-4">
+          {product.unit || "\u00A0"}
+        </p>
 
-          <span className="text-lg font-bold text-[#154FCB]">
-            ₹{Number(price).toLocaleString("en-IN")}
-          </span>
+        {/* Spacer - pushes price + button to bottom */}
+        <div className="flex-1"></div>
 
-          {product.discountPrice > 0 &&
-            product.price > product.discountPrice && (
-              <del className="text-xs text-gray-400">
-                ₹{Number(product.price).toLocaleString("en-IN")}
-              </del>
+        {/* Price + ADD Button (Always at bottom) */}
+        <div className="mt-2 flex items-center justify-between gap-2">
+          {/* Price */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[15px] font-bold text-slate-900 truncate">
+              ₹{displayPrice}
+            </span>
+            {hasDiscount && (
+              <span className="text-[12px] text-slate-400 line-through shrink-0">
+                ₹{product.price}
+              </span>
             )}
+          </div>
 
+          {/* ADD Button */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isOutOfStock) addToCart(product);
+            }}
+            disabled={isOutOfStock}
+            className={`shrink-0 h-8 min-w-[68px] px-2.5 rounded-lg text-[13px] font-bold transition-all active:scale-95 ${
+              isOutOfStock
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : "bg-white text-[#1e3a8a] border border-[#1e3a8a] hover:bg-[#1e3a8a] hover:text-white"
+            }`}
+          >
+            {isOutOfStock ? "Sold" : "ADD"}
+          </button>
         </div>
-
-        {/* ADD TO CART */}
-        <button
-          type="button"
-          onClick={() => addToCart(product)}
-          className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#154FCB] text-sm font-semibold text-white transition-all duration-200 hover:bg-[#103DA1] active:scale-[0.98]"
-        >
-          <ShoppingCart size={17} />
-          Add to Cart
-        </button>
-
       </div>
     </div>
   );
