@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import axios from "axios";
+import api from "../../api/api";
 import { useCart } from "../../context/CartContext";
 
 // ============================================================
@@ -566,40 +567,27 @@ export default function ProductDetail() {
 
     addToCart(item);
   };
-  const handleWishlist = async () => {
+const handleWishlist = async () => {
   try {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
     if (!product?._id) return;
 
     if (wishlist) {
-      await axios.delete("/api/wishlist", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await api.delete("/api/wishlist", {
         data: {
           productId: product._id,
-          variantId: activeVariant?._id || null,
         },
+        withCredentials: true,
       });
 
       setWishlist(false);
     } else {
-      await axios.post(
+      await api.post(
         "/api/wishlist",
         {
           productId: product._id,
-          variantId: activeVariant?._id || null,
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          withCredentials: true,
         }
       );
 
@@ -615,24 +603,16 @@ export default function ProductDetail() {
 };
 useEffect(() => {
   const checkWishlistStatus = async () => {
+    if (!product?._id) return;
+
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token || !product?._id) {
-        setWishlist(false);
-        return;
-      }
-
-      const response = await axios.get(
+      const response = await api.get(
         "/api/wishlist/check",
         {
           params: {
             productId: product._id,
-            variantId: activeVariant?._id || null,
           },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          withCredentials: true,
         }
       );
 
@@ -650,7 +630,7 @@ useEffect(() => {
   };
 
   checkWishlistStatus();
-}, [product?._id, activeVariant?._id]);
+}, [product?._id]);
 
   // ==========================================================
   // BUY NOW
