@@ -65,10 +65,7 @@ export default function App() {
           {/* ====================== STORE ADMIN ====================== */}
           <Route path="/store-admin/login" element={<StoreLogin />} />
           <Route path="/store-admin/dashboard" element={<StoreAdmin />} />
-          <Route
-  path="/wishlist"
-  element={<Wishlist />}
-/>
+          <Route path="/wishlist" element={<Wishlist />}/>
           {/* Optional: 404 */}
           {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
