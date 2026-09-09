@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   Package,
   ShoppingBag,
@@ -10,11 +11,13 @@ import {
   ArrowRight,
   Settings,
   Tags,
+  Megaphone,
 } from "lucide-react";
 
 const API = "http://localhost:5000";
 
 export default function StoreDashboard({ store, onNavigate }) {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,14 +35,11 @@ export default function StoreDashboard({ store, onNavigate }) {
     try {
       setLoading(true);
 
-      const response = await axios.get(
-        `${API}/api/products`,
-        {
-          params: {
-            storeId,
-          },
-        }
-      );
+      const response = await axios.get(`${API}/api/products`, {
+        params: {
+          storeId,
+        },
+      });
 
       setProducts(response.data.products || []);
     } catch (error) {
@@ -121,6 +121,14 @@ export default function StoreDashboard({ store, onNavigate }) {
       page: "categories",
     },
     {
+      title: "Manage Ads",
+      description: "Create and manage promotional banners.",
+      icon: Megaphone,
+      color: "text-pink-600",
+      bg: "bg-pink-50",
+      page: "ads",
+    },
+    {
       title: "Store Settings",
       description: "Update your store information.",
       icon: Settings,
@@ -130,14 +138,23 @@ export default function StoreDashboard({ store, onNavigate }) {
     },
   ];
 
+  // Handle navigation
+  const handleActionClick = (page) => {
+    if (page === "ads") {
+      navigate("/store-admin/ads");
+    } else if (page === "products") {
+      // If you still use onNavigate for products
+      onNavigate?.("products", "add");
+    } else {
+      onNavigate?.(page);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-
       {/* HEADER */}
-
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               Seller Dashboard
@@ -153,20 +170,17 @@ export default function StoreDashboard({ store, onNavigate }) {
           </div>
 
           <button
-            onClick={() => onNavigate("products", "add")}
+            onClick={() => onNavigate?.("products", "add")}
             className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold"
           >
             <Plus size={19} />
             Add Product
           </button>
-
         </div>
       </div>
 
       {/* STATS */}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-
         {cards.map((card) => {
           const Icon = card.icon;
 
@@ -176,11 +190,8 @@ export default function StoreDashboard({ store, onNavigate }) {
               className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition"
             >
               <div className="flex items-center justify-between">
-
                 <div>
-                  <p className="text-sm text-gray-500">
-                    {card.title}
-                  </p>
+                  <p className="text-sm text-gray-500">{card.title}</p>
 
                   <h2 className="text-3xl font-bold text-gray-900 mt-2">
                     {loading ? "..." : card.value}
@@ -190,27 +201,18 @@ export default function StoreDashboard({ store, onNavigate }) {
                 <div
                   className={`w-12 h-12 ${card.iconBg} rounded-xl flex items-center justify-center`}
                 >
-                  <Icon
-                    size={22}
-                    className={card.iconColor}
-                  />
+                  <Icon size={22} className={card.iconColor} />
                 </div>
-
               </div>
             </div>
           );
         })}
-
       </div>
 
       {/* STORE SUMMARY */}
-
       <div className="mt-8 bg-white border border-gray-200 rounded-2xl p-6">
-
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-
           <div className="flex items-center gap-4">
-
             {store?.logo ? (
               <img
                 src={store.logo}
@@ -219,10 +221,7 @@ export default function StoreDashboard({ store, onNavigate }) {
               />
             ) : (
               <div className="w-16 h-16 rounded-xl bg-blue-600 flex items-center justify-center">
-                <Store
-                  size={28}
-                  className="text-white"
-                />
+                <Store size={28} className="text-white" />
               </div>
             )}
 
@@ -237,71 +236,49 @@ export default function StoreDashboard({ store, onNavigate }) {
 
               <div className="flex items-center gap-2 mt-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full" />
-
                 <span className="text-xs font-semibold text-green-600">
                   Store Live
                 </span>
               </div>
             </div>
-
           </div>
 
           <button
-            onClick={() => onNavigate("settings")}
+            onClick={() => onNavigate?.("settings")}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border rounded-xl hover:bg-gray-50 text-sm font-medium"
           >
             Store Settings
             <ArrowRight size={16} />
           </button>
-
         </div>
-
       </div>
 
       {/* QUICK ACTIONS */}
-
       <div className="mt-8">
-
         <div className="mb-4">
-          <h2 className="text-lg font-bold text-gray-900">
-            Quick Actions
-          </h2>
-
+          <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
           <p className="text-sm text-gray-500">
             Quickly manage your marketplace store.
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
 
             return (
               <button
                 key={action.title}
-                onClick={() =>
-                  onNavigate(
-                    action.page,
-                    action.page === "products"
-                      ? "add"
-                      : undefined
-                  )
-                }
+                onClick={() => handleActionClick(action.page)}
                 className="bg-white border border-gray-200 rounded-2xl p-5 text-left hover:border-blue-400 hover:shadow-md transition group"
               >
-
                 <div
                   className={`w-11 h-11 ${action.bg} rounded-xl flex items-center justify-center mb-4`}
                 >
-                  <Icon
-                    size={21}
-                    className={action.color}
-                  />
+                  <Icon size={21} className={action.color} />
                 </div>
 
                 <div className="flex items-center justify-between">
-
                   <h3 className="font-semibold text-gray-900">
                     {action.title}
                   </h3>
@@ -310,21 +287,16 @@ export default function StoreDashboard({ store, onNavigate }) {
                     size={16}
                     className="text-gray-400 group-hover:text-blue-600 transition"
                   />
-
                 </div>
 
                 <p className="text-sm text-gray-500 mt-1">
                   {action.description}
                 </p>
-
               </button>
             );
           })}
-
         </div>
-
       </div>
-
     </div>
   );
 }

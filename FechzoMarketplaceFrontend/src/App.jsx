@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -24,11 +25,50 @@ import StoreRegisterForm from "./pages/store/StoreRegisterForm";
 import StoreAdmin from "./pages/storeAdmin/StoreAdmin";
 import StoreLogin from "./pages/storeAdmin/StoreLogin";
 
-// 👇 New pages you will need
-import StorePage from "./components/common/StorePage";           // Single store → products
-import ProductDetail from "./components/common/ProductDetail"; // Single product page
+import StorePage from "./components/common/StorePage";
+import ProductDetail from "./components/common/ProductDetail";
+import StoreAds from "./pages/storeAdmin/StoreAds";
+import AdForm from "./pages/storeAdmin/AdForm";
+
+ // Single product page
 import Wishlist from "../src/components/common/WishlistPage";      // Wishlist page
 export default function App() {
+  // ============================================================
+  // LOGIN TRANSFER FROM FECHZO FOOD (5173)
+  // ============================================================
+  useEffect(() => {
+  const handleLoginTransfer = () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+
+      const token = params.get("token");
+      const userStr = params.get("user"); // already decoded by URLSearchParams
+
+      // No transfer parameters
+      if (!token || !userStr) return;
+
+      // Parse the user (NO extra decodeURIComponent)
+      const user = JSON.parse(userStr);
+
+      // Save in Marketplace
+      localStorage.setItem("jwt_token", token);
+      localStorage.setItem("userProfile", JSON.stringify(user));
+
+      // Clean the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Notify Header
+      window.dispatchEvent(new Event("auth-changed"));
+
+      console.log("✅ Login transferred successfully:", user);
+    } catch (error) {
+      console.error("❌ Error processing login transfer:", error);
+    }
+  };
+
+  handleLoginTransfer();
+}, []);
+
   return (
     <BrowserRouter>
       <Header />
@@ -65,10 +105,11 @@ export default function App() {
           {/* ====================== STORE ADMIN ====================== */}
           <Route path="/store-admin/login" element={<StoreLogin />} />
           <Route path="/store-admin/dashboard" element={<StoreAdmin />} />
+          <Route path="/store-admin/ads" element={<StoreAds />} />
+          <Route path="/store-admin/ads/create" element={<AdForm />} />
+          <Route path="/store-admin/ads/edit/:id" element={<AdForm />} />
           <Route
-  path="/wishlist"
-  element={<Wishlist />}
-/>
+path="/wishlist"element={<Wishlist />}/>
           {/* Optional: 404 */}
           {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
