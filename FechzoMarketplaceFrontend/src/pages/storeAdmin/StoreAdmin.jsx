@@ -14,11 +14,11 @@ import {
   CircleCheck,
   UserRound,
 } from "lucide-react";
+import StoreProducts from "./StoreProducts";
+
 
 import StoreDashboard from "./StoreDashboard";
-import StoreProducts from "./StoreProducts";
 import StoreSettings from "./StoreSettings";
-
 export default function StoreAdmin() {
   const [activePage, setActivePage] = useState("dashboard");
 

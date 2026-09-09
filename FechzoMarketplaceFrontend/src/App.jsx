@@ -30,6 +30,8 @@ import ProductDetail from "./components/common/ProductDetail";
 import StoreAds from "./pages/storeAdmin/StoreAds";
 import AdForm from "./pages/storeAdmin/AdForm";
 
+ // Single product page
+import Wishlist from "../src/components/common/WishlistPage";      // Wishlist page
 export default function App() {
   // ============================================================
   // LOGIN TRANSFER FROM FECHZO FOOD (5173)
@@ -106,6 +108,10 @@ export default function App() {
           <Route path="/store-admin/ads" element={<StoreAds />} />
           <Route path="/store-admin/ads/create" element={<AdForm />} />
           <Route path="/store-admin/ads/edit/:id" element={<AdForm />} />
+          <Route
+path="/wishlist"element={<Wishlist />}/>
+          {/* Optional: 404 */}
+          {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
       </main>
     </BrowserRouter>
