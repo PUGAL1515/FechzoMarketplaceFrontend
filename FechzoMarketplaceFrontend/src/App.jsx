@@ -27,7 +27,7 @@ import StoreLogin from "./pages/storeAdmin/StoreLogin";
 // 👇 New pages you will need
 import StorePage from "./components/common/StorePage";           // Single store → products
 import ProductDetail from "./components/common/ProductDetail"; // Single product page
-
+import Wishlist from "../src/components/common/WishlistPage";      // Wishlist page
 export default function App() {
   return (
     <BrowserRouter>
@@ -65,7 +65,10 @@ export default function App() {
           {/* ====================== STORE ADMIN ====================== */}
           <Route path="/store-admin/login" element={<StoreLogin />} />
           <Route path="/store-admin/dashboard" element={<StoreAdmin />} />
-
+          <Route
+  path="/wishlist"
+  element={<Wishlist />}
+/>
           {/* Optional: 404 */}
           {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
