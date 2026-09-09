@@ -20,7 +20,7 @@ import {
   Eye,
 } from "lucide-react";
 
-import AddProduct from "./AddProduct";
+import AddProduct from "../storeAdmin/AddProduct/AddProduct";
 
 const API = "http://localhost:5000";
 
