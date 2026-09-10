@@ -5,28 +5,52 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// ============================================================
+// REQUEST INTERCEPTOR
+// ============================================================
 api.interceptors.request.use(
   (config) => {
-    // Optional fallback for Authorization header.
-    // Shared authentication should primarily work through the cookie.
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("jwt_token");
 
     if (token) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
+// ============================================================
+// RESPONSE INTERCEPTOR
+// ============================================================
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+
+  async (error) => {
+    const status = error?.response?.status;
+
     console.error(
       "API Error:",
-      error?.response || error?.message
+      error?.response?.data || error?.message
     );
+
+    // ========================================================
+    // TOKEN EXPIRED / UNAUTHORIZED
+    // ========================================================
+    if (status === 401) {
+      localStorage.removeItem("jwt_token");
+      localStorage.removeItem("userProfile");
+
+      // Tell Header and other components that auth changed
+      window.dispatchEvent(new Event("auth-changed"));
+
+      // Don't force redirect for every API call if you don't want
+      // to interrupt pages like wishlist/cart.
+    }
 
     return Promise.reject(error);
   }
