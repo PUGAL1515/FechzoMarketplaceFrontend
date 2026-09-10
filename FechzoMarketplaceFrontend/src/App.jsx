@@ -32,6 +32,7 @@ import AdForm from "./pages/storeAdmin/AdForm";
 
  // Single product page
 import Wishlist from "../src/components/common/WishlistPage";      // Wishlist page
+import OrderPage from "./pages/orders/OrderPage";
 export default function App() {
   // ============================================================
   // LOGIN TRANSFER FROM FECHZO FOOD (5173)
@@ -112,6 +113,7 @@ export default function App() {
 path="/wishlist"element={<Wishlist />}/>
           {/* Optional: 404 */}
           {/* <Route path="*" element={<NotFound />} /> */}
+          <Route path="/order" element={<OrderPage />} />
         </Routes>
       </main>
     </BrowserRouter>

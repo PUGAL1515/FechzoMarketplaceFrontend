@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Minus,
   Plus,
@@ -12,6 +12,7 @@ import {
 import { useCart } from "../../context/CartContext";
 
 export default function CartPage() {
+  const navigate = useNavigate();
   const {
     cart,
     cartTotal,
@@ -807,13 +808,23 @@ export default function CartPage() {
 
                 {/* CHECKOUT */}
 
-                <Link
-                  to="/checkout"
-                  className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-[#ff9f00] hover:bg-[#f39200] text-white font-bold text-sm transition-all shadow-sm"
-                >
-                  Proceed to Checkout
-                  <ArrowRight size={17} />
-                </Link>
+               <button
+  type="button"
+  onClick={() => {
+    const token = localStorage.getItem("jwt_token");
+
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    navigate("/order");
+  }}
+  className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-[#ff9f00] hover:bg-[#f39200] text-white font-bold text-sm transition-all shadow-sm"
+>
+  Proceed to Order
+  <ArrowRight size={17} />
+</button>
 
                 {/* CONTINUE */}
 

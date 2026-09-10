@@ -28,7 +28,10 @@ import { useCart } from "../../context/CartContext";
 // HELPERS
 // ============================================================
 
-const normalize = (value) => String(value ?? "").trim().toLowerCase();
+const normalize = (value) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase();
 
 const getAttribute = (variant, attributeName) => {
   if (!variant?.attributes) return "";
@@ -36,7 +39,7 @@ const getAttribute = (variant, attributeName) => {
   const target = normalize(attributeName);
 
   const key = Object.keys(variant.attributes).find(
-    (key) => normalize(key) === target
+    (key) => normalize(key) === target,
   );
 
   return key ? variant.attributes[key] : "";
@@ -126,10 +129,7 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { productId } = useParams();
 
-  const {
-    cart = [],
-    addToCart,
-  } = useCart();
+  const { cart = [], addToCart } = useCart();
 
   // ==========================================================
   // STATE
@@ -174,7 +174,7 @@ export default function ProductDetail() {
         setError(
           err?.response?.data?.message ||
             err?.message ||
-            "Unable to load product"
+            "Unable to load product",
         );
       } finally {
         setLoading(false);
@@ -222,7 +222,7 @@ export default function ProductDetail() {
     }
 
     const currentExists = colorOptions.some(
-      (item) => normalize(item.value) === normalize(selectedColor)
+      (item) => normalize(item.value) === normalize(selectedColor),
     );
 
     if (!currentExists) {
@@ -243,8 +243,7 @@ export default function ProductDetail() {
 
     const filtered = variants.filter(
       (variant) =>
-        normalize(getAttribute(variant, "color")) ===
-        normalize(selectedColor)
+        normalize(getAttribute(variant, "color")) === normalize(selectedColor),
     );
 
     return filtered.length ? filtered : variants;
@@ -304,7 +303,7 @@ export default function ProductDetail() {
     }
 
     const currentExists = sizeOptions.some(
-      (item) => normalize(item.value) === normalize(selectedSize)
+      (item) => normalize(item.value) === normalize(selectedSize),
     );
 
     if (!currentExists) {
@@ -317,7 +316,7 @@ export default function ProductDetail() {
     }
 
     const selectedSizeOption = sizeOptions.find(
-      (item) => normalize(item.value) === normalize(selectedSize)
+      (item) => normalize(item.value) === normalize(selectedSize),
     );
 
     if (
@@ -325,7 +324,7 @@ export default function ProductDetail() {
       getVariantStock(selectedSizeOption.variant) <= 0
     ) {
       const availableSize = sizeOptions.find(
-        (item) => getVariantStock(item.variant) > 0
+        (item) => getVariantStock(item.variant) > 0,
       );
 
       if (availableSize) {
@@ -347,8 +346,7 @@ export default function ProductDetail() {
         const size = normalize(getAttribute(variant, "size"));
 
         return (
-          color === normalize(selectedColor) &&
-          size === normalize(selectedSize)
+          color === normalize(selectedColor) && size === normalize(selectedSize)
         );
       });
 
@@ -359,7 +357,7 @@ export default function ProductDetail() {
       const colorVariant = variants.find(
         (variant) =>
           normalize(getAttribute(variant, "color")) ===
-          normalize(selectedColor)
+          normalize(selectedColor),
       );
 
       if (colorVariant) return colorVariant;
@@ -425,19 +423,12 @@ export default function ProductDetail() {
   const currentStock = getVariantStock(activeVariant);
 
   const currentPrice =
-    Number(activeVariant?.price) ||
-    Number(product?.price) ||
-    0;
+    Number(activeVariant?.price) || Number(product?.price) || 0;
 
   const currentMrp =
-    Number(activeVariant?.mrp) ||
-    Number(product?.mrp) ||
-    currentPrice;
+    Number(activeVariant?.mrp) || Number(product?.mrp) || currentPrice;
 
-  const discountPercentage = getDiscountPercentage(
-    currentPrice,
-    currentMrp
-  );
+  const discountPercentage = getDiscountPercentage(currentPrice, currentMrp);
 
   const isOutOfStock = !activeVariant || currentStock <= 0;
 
@@ -456,9 +447,7 @@ export default function ProductDetail() {
         item?.product;
 
       const itemVariantId =
-        item?.variantId ||
-        item?.variant?._id ||
-        item?.selectedVariant?._id;
+        item?.variantId || item?.variant?._id || item?.selectedVariant?._id;
 
       return (
         String(itemProductId) === String(product._id) &&
@@ -478,7 +467,7 @@ export default function ProductDetail() {
 
     const variantsForColor = variants.filter(
       (variant) =>
-        normalize(getAttribute(variant, "color")) === normalize(color)
+        normalize(getAttribute(variant, "color")) === normalize(color),
     );
 
     const availableVariant =
@@ -509,9 +498,7 @@ export default function ProductDetail() {
   };
 
   const increaseQuantity = () => {
-    setQuantity((previous) =>
-      Math.min(currentStock || 1, previous + 1)
-    );
+    setQuantity((previous) => Math.min(currentStock || 1, previous + 1));
   };
 
   // ==========================================================
@@ -540,16 +527,10 @@ export default function ProductDetail() {
 
       stock: currentStock,
 
-      images:
-        activeImages.length > 0
-          ? activeImages
-          : product.images || [],
+      images: activeImages.length > 0 ? activeImages : product.images || [],
 
       thumbnail:
-        activeImages[0] ||
-        product.thumbnail ||
-        product.images?.[0] ||
-        "",
+        activeImages[0] || product.thumbnail || product.images?.[0] || "",
     };
   };
 
@@ -567,70 +548,62 @@ export default function ProductDetail() {
 
     addToCart(item);
   };
-const handleWishlist = async () => {
-  try {
-    if (!product?._id) return;
-
-    if (wishlist) {
-      await api.delete("/api/wishlist", {
-        data: {
-          productId: product._id,
-        },
-        withCredentials: true,
-      });
-
-      setWishlist(false);
-    } else {
-      await api.post(
-        "/api/wishlist",
-        {
-          productId: product._id,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-
-      setWishlist(true);
-    }
-  } catch (error) {
-    console.error("Wishlist error:", error);
-
-    if (error?.response?.status === 401) {
-      navigate("/login");
-    }
-  }
-};
-useEffect(() => {
-  const checkWishlistStatus = async () => {
-    if (!product?._id) return;
-
+  const handleWishlist = async () => {
     try {
-      const response = await api.get(
-        "/api/wishlist/check",
-        {
+      if (!product?._id) return;
+
+      if (wishlist) {
+        await api.delete("/api/wishlist", {
+          data: {
+            productId: product._id,
+          },
+          withCredentials: true,
+        });
+
+        setWishlist(false);
+      } else {
+        await api.post(
+          "/api/wishlist",
+          {
+            productId: product._id,
+          },
+          {
+            withCredentials: true,
+          },
+        );
+
+        setWishlist(true);
+      }
+    } catch (error) {
+      console.error("Wishlist error:", error);
+
+      if (error?.response?.status === 401) {
+        navigate("/login");
+      }
+    }
+  };
+  useEffect(() => {
+    const checkWishlistStatus = async () => {
+      if (!product?._id) return;
+
+      try {
+        const response = await api.get("/api/wishlist/check", {
           params: {
             productId: product._id,
           },
           withCredentials: true,
-        }
-      );
+        });
 
-      setWishlist(
-        Boolean(response?.data?.isWishlisted)
-      );
-    } catch (error) {
-      console.error(
-        "Wishlist check error:",
-        error
-      );
+        setWishlist(Boolean(response?.data?.isWishlisted));
+      } catch (error) {
+        console.error("Wishlist check error:", error);
 
-      setWishlist(false);
-    }
-  };
+        setWishlist(false);
+      }
+    };
 
-  checkWishlistStatus();
-}, [product?._id]);
+    checkWishlistStatus();
+  }, [product?._id]);
 
   // ==========================================================
   // BUY NOW
@@ -655,18 +628,14 @@ useEffect(() => {
   const nextImage = () => {
     if (!activeImages.length) return;
 
-    setActiveImageIndex(
-      (previous) => (previous + 1) % activeImages.length
-    );
+    setActiveImageIndex((previous) => (previous + 1) % activeImages.length);
   };
 
   const previousImage = () => {
     if (!activeImages.length) return;
 
     setActiveImageIndex(
-      (previous) =>
-        (previous - 1 + activeImages.length) %
-        activeImages.length
+      (previous) => (previous - 1 + activeImages.length) % activeImages.length,
     );
   };
 
@@ -732,10 +701,7 @@ useEffect(() => {
 
   const brand = product?.brand || "Brand";
 
-  const productName =
-    product?.name ||
-    product?.productName ||
-    "Product";
+  const productName = product?.name || product?.productName || "Product";
 
   const description =
     product?.description ||
@@ -750,14 +716,12 @@ useEffect(() => {
   const gender = product?.gender;
 
   const productRating = Number(
-    product?.rating ||
-      product?.averageRating ||
-      product?.ratings ||
-      4.3
+    product?.rating || product?.averageRating || product?.ratings || 4.3,
   );
 
-  const reviewCount =
-    Number(product?.reviewCount || product?.reviewsCount || 0);
+  const reviewCount = Number(
+    product?.reviewCount || product?.reviewsCount || 0,
+  );
 
   // ==========================================================
   // RENDER
@@ -786,9 +750,7 @@ useEffect(() => {
 
           <span>›</span>
 
-          <span className="text-gray-700">
-            {productName}
-          </span>
+          <span className="text-gray-700">{productName}</span>
         </div>
       </div>
 
@@ -840,24 +802,22 @@ useEffect(() => {
 
               <div className="flex-1 relative flex flex-col">
                 <div className="absolute top-4 right-4 z-10 flex gap-2">
-              <button
-  onClick={handleWishlist}
-  className="w-10 h-10 rounded-full bg-white shadow border border-gray-200 flex items-center justify-center hover:shadow-md transition"
-  title={wishlist ? "Remove from wishlist" : "Add to wishlist"}
->
-  <Heart
-    size={21}
-    className={
-      wishlist
-        ? "fill-red-500 text-red-500"
-        : "text-gray-500"
-    }
-  />
-</button>
-
                   <button
-                    className="w-10 h-10 rounded-full bg-white shadow border border-gray-100 flex items-center justify-center hover:shadow-md"
+                    onClick={handleWishlist}
+                    className="w-10 h-10 rounded-full bg-white shadow border border-gray-200 flex items-center justify-center hover:shadow-md transition"
+                    title={
+                      wishlist ? "Remove from wishlist" : "Add to wishlist"
+                    }
                   >
+                    <Heart
+                      size={21}
+                      className={
+                        wishlist ? "fill-red-500 text-red-500" : "text-gray-500"
+                      }
+                    />
+                  </button>
+
+                  <button className="w-10 h-10 rounded-full bg-white shadow border border-gray-100 flex items-center justify-center hover:shadow-md">
                     <Share2 size={19} className="text-gray-600" />
                   </button>
                 </div>
@@ -923,8 +883,8 @@ useEffect(() => {
                     {isOutOfStock
                       ? "OUT OF STOCK"
                       : isInCart
-                      ? "GO TO CART"
-                      : "ADD TO CART"}
+                        ? "GO TO CART"
+                        : "ADD TO CART"}
                   </button>
 
                   <button
@@ -1037,10 +997,7 @@ useEffect(() => {
 
                 <div className="space-y-3">
                   <div className="flex gap-3">
-                    <Tag
-                      size={17}
-                      className="text-[#388e3c] mt-0.5 shrink-0"
-                    />
+                    <Tag size={17} className="text-[#388e3c] mt-0.5 shrink-0" />
 
                     <div>
                       <p className="text-sm font-medium text-gray-800">
@@ -1096,9 +1053,7 @@ useEffect(() => {
               {colorOptions.length > 0 && (
                 <div className="mt-6 border-t border-gray-100 pt-5">
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="text-sm font-semibold">
-                      Color
-                    </span>
+                    <span className="text-sm font-semibold">Color</span>
 
                     <span className="text-sm text-gray-500">
                       {selectedColor}
@@ -1111,13 +1066,11 @@ useEffect(() => {
 
                       const colorVariant = variants.find(
                         (variant) =>
-                          normalize(
-                            getAttribute(variant, "color")
-                          ) === normalize(color)
+                          normalize(getAttribute(variant, "color")) ===
+                          normalize(color),
                       );
 
-                      const colorImages =
-                        getVariantImages(colorVariant);
+                      const colorImages = getVariantImages(colorVariant);
 
                       const image =
                         colorImages[0] ||
@@ -1125,28 +1078,23 @@ useEffect(() => {
                         product.images?.[0];
 
                       const selected =
-                        normalize(selectedColor) ===
-                        normalize(color);
+                        normalize(selectedColor) === normalize(color);
 
                       const colorStock = variants
                         .filter(
                           (variant) =>
-                            normalize(
-                              getAttribute(variant, "color")
-                            ) === normalize(color)
+                            normalize(getAttribute(variant, "color")) ===
+                            normalize(color),
                         )
                         .reduce(
-                          (total, variant) =>
-                            total + getVariantStock(variant),
-                          0
+                          (total, variant) => total + getVariantStock(variant),
+                          0,
                         );
 
                       return (
                         <button
                           key={color}
-                          onClick={() =>
-                            handleColorChange(color)
-                          }
+                          onClick={() => handleColorChange(color)}
                           className={`relative w-[76px] h-[88px] border bg-white flex flex-col items-center justify-center transition ${
                             selected
                               ? "border-[#2874f0] border-2"
@@ -1164,8 +1112,7 @@ useEffect(() => {
                               <span
                                 className="w-8 h-8 rounded-full border border-gray-300"
                                 style={{
-                                  backgroundColor:
-                                    getColorStyle(color),
+                                  backgroundColor: getColorStyle(color),
                                 }}
                               />
                             )}
@@ -1196,9 +1143,7 @@ useEffect(() => {
               {sizeOptions.length > 0 && (
                 <div className="mt-6 border-t border-gray-100 pt-5">
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="text-sm font-semibold">
-                      Size
-                    </span>
+                    <span className="text-sm font-semibold">Size</span>
 
                     <button className="text-xs text-[#2874f0] font-medium">
                       Size Chart
@@ -1211,35 +1156,28 @@ useEffect(() => {
 
                       const variant = variants.find(
                         (item) =>
-                          normalize(
-                            getAttribute(item, "color")
-                          ) === normalize(selectedColor) &&
-                          normalize(
-                            getAttribute(item, "size")
-                          ) === normalize(size)
+                          normalize(getAttribute(item, "color")) ===
+                            normalize(selectedColor) &&
+                          normalize(getAttribute(item, "size")) ===
+                            normalize(size),
                       );
 
-                      const stock = getVariantStock(
-                        variant || option.variant
-                      );
+                      const stock = getVariantStock(variant || option.variant);
 
                       const selected =
-                        normalize(selectedSize) ===
-                        normalize(size);
+                        normalize(selectedSize) === normalize(size);
 
                       return (
                         <button
                           key={size}
                           disabled={stock <= 0}
-                          onClick={() =>
-                            handleSizeChange(size)
-                          }
+                          onClick={() => handleSizeChange(size)}
                           className={`min-w-[58px] px-4 py-2.5 text-sm border font-medium relative ${
                             selected
                               ? "border-[#2874f0] text-[#2874f0] bg-blue-50"
                               : stock <= 0
-                              ? "border-gray-200 text-gray-300 cursor-not-allowed"
-                              : "border-gray-300 text-gray-700 hover:border-[#2874f0]"
+                                ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                                : "border-gray-300 text-gray-700 hover:border-[#2874f0]"
                           }`}
                         >
                           {size}
@@ -1262,9 +1200,7 @@ useEffect(() => {
                 <div className="mt-5 bg-gray-50 border border-gray-100 p-3">
                   <div className="grid grid-cols-2 gap-y-2 text-xs">
                     <div>
-                      <span className="text-gray-500">
-                        SKU
-                      </span>
+                      <span className="text-gray-500">SKU</span>
 
                       <p className="font-medium text-gray-800 mt-0.5">
                         {activeVariant.sku || "N/A"}
@@ -1272,15 +1208,11 @@ useEffect(() => {
                     </div>
 
                     <div>
-                      <span className="text-gray-500">
-                        Stock
-                      </span>
+                      <span className="text-gray-500">Stock</span>
 
                       <p
                         className={`font-medium mt-0.5 ${
-                          currentStock > 0
-                            ? "text-green-600"
-                            : "text-red-500"
+                          currentStock > 0 ? "text-green-600" : "text-red-500"
                         }`}
                       >
                         {currentStock > 0
@@ -1298,9 +1230,7 @@ useEffect(() => {
 
               {!isOutOfStock && (
                 <div className="mt-5 flex items-center gap-4">
-                  <span className="text-sm font-semibold">
-                    Quantity
-                  </span>
+                  <span className="text-sm font-semibold">Quantity</span>
 
                   <div className="flex items-center border border-gray-300">
                     <button
@@ -1333,10 +1263,7 @@ useEffect(() => {
               <div className="mt-5">
                 {isOutOfStock ? (
                   <div className="bg-red-50 border border-red-100 p-3 flex items-start gap-3">
-                    <PackageCheck
-                      size={20}
-                      className="text-red-500 mt-0.5"
-                    />
+                    <PackageCheck size={20} className="text-red-500 mt-0.5" />
 
                     <div>
                       <p className="font-semibold text-red-600 text-sm">
@@ -1344,8 +1271,8 @@ useEffect(() => {
                       </p>
 
                       <p className="text-xs text-red-500 mt-1">
-                        This selected variant is out of stock.
-                        Please choose another variant.
+                        This selected variant is out of stock. Please choose
+                        another variant.
                       </p>
                     </div>
                   </div>
@@ -1367,15 +1294,10 @@ useEffect(() => {
 
               <div className="mt-6 border-t border-gray-100 pt-5">
                 <div className="flex gap-3 mb-4">
-                  <Truck
-                    size={21}
-                    className="text-gray-500 shrink-0"
-                  />
+                  <Truck size={21} className="text-gray-500 shrink-0" />
 
                   <div>
-                    <p className="text-sm font-semibold">
-                      Delivery
-                    </p>
+                    <p className="text-sm font-semibold">Delivery</p>
 
                     <p className="text-xs text-gray-500 mt-1">
                       Fast and reliable delivery available.
@@ -1384,33 +1306,22 @@ useEffect(() => {
                 </div>
 
                 <div className="flex gap-3 mb-4">
-                  <RotateCcw
-                    size={21}
-                    className="text-gray-500 shrink-0"
-                  />
+                  <RotateCcw size={21} className="text-gray-500 shrink-0" />
 
                   <div>
-                    <p className="text-sm font-semibold">
-                      7 Days Replacement
-                    </p>
+                    <p className="text-sm font-semibold">7 Days Replacement</p>
 
                     <p className="text-xs text-gray-500 mt-1">
-                      Replacement policy applicable as per
-                      product conditions.
+                      Replacement policy applicable as per product conditions.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <ShieldCheck
-                    size={21}
-                    className="text-gray-500 shrink-0"
-                  />
+                  <ShieldCheck size={21} className="text-gray-500 shrink-0" />
 
                   <div>
-                    <p className="text-sm font-semibold">
-                      Secure Payments
-                    </p>
+                    <p className="text-sm font-semibold">Secure Payments</p>
 
                     <p className="text-xs text-gray-500 mt-1">
                       Safe and secure checkout.
@@ -1428,9 +1339,7 @@ useEffect(() => {
 
         <div className="mt-3 bg-white border border-gray-200 rounded-sm">
           <div className="px-5 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">
-              Product Description
-            </h2>
+            <h2 className="text-xl font-semibold">Product Description</h2>
           </div>
 
           <div className="p-5">
@@ -1446,52 +1355,31 @@ useEffect(() => {
 
         <div className="mt-3 bg-white border border-gray-200 rounded-sm">
           <div className="px-5 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">
-              Product Highlights
-            </h2>
+            <h2 className="text-xl font-semibold">Product Highlights</h2>
           </div>
 
           <div className="p-5">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="border border-gray-200 p-4">
-                <PackageCheck
-                  size={22}
-                  className="text-[#2874f0] mb-3"
-                />
+                <PackageCheck size={22} className="text-[#2874f0] mb-3" />
 
-                <p className="text-xs text-gray-500">
-                  Product
-                </p>
+                <p className="text-xs text-gray-500">Product</p>
 
-                <p className="font-medium text-sm mt-1">
-                  {productName}
-                </p>
+                <p className="font-medium text-sm mt-1">{productName}</p>
               </div>
 
               <div className="border border-gray-200 p-4">
-                <Tag
-                  size={22}
-                  className="text-[#2874f0] mb-3"
-                />
+                <Tag size={22} className="text-[#2874f0] mb-3" />
 
-                <p className="text-xs text-gray-500">
-                  Category
-                </p>
+                <p className="text-xs text-gray-500">Category</p>
 
-                <p className="font-medium text-sm mt-1">
-                  {categoryName}
-                </p>
+                <p className="font-medium text-sm mt-1">{categoryName}</p>
               </div>
 
               <div className="border border-gray-200 p-4">
-                <ShoppingCart
-                  size={22}
-                  className="text-[#2874f0] mb-3"
-                />
+                <ShoppingCart size={22} className="text-[#2874f0] mb-3" />
 
-                <p className="text-xs text-gray-500">
-                  Variants
-                </p>
+                <p className="text-xs text-gray-500">Variants</p>
 
                 <p className="font-medium text-sm mt-1">
                   {variants.length} available
@@ -1499,18 +1387,11 @@ useEffect(() => {
               </div>
 
               <div className="border border-gray-200 p-4">
-                <ShieldCheck
-                  size={22}
-                  className="text-[#2874f0] mb-3"
-                />
+                <ShieldCheck size={22} className="text-[#2874f0] mb-3" />
 
-                <p className="text-xs text-gray-500">
-                  Payment
-                </p>
+                <p className="text-xs text-gray-500">Payment</p>
 
-                <p className="font-medium text-sm mt-1">
-                  Secure checkout
-                </p>
+                <p className="font-medium text-sm mt-1">Secure checkout</p>
               </div>
             </div>
           </div>
@@ -1522,30 +1403,22 @@ useEffect(() => {
 
         <div className="mt-3 bg-white border border-gray-200 rounded-sm mb-8">
           <div className="px-5 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">
-              Specifications
-            </h2>
+            <h2 className="text-xl font-semibold">Specifications</h2>
           </div>
 
           <div className="divide-y divide-gray-100">
             {/* BRAND */}
 
             <div className="grid grid-cols-[150px_1fr] sm:grid-cols-[220px_1fr] px-5 py-4">
-              <span className="text-sm text-gray-500">
-                Brand
-              </span>
+              <span className="text-sm text-gray-500">Brand</span>
 
-              <span className="text-sm text-gray-800 font-medium">
-                {brand}
-              </span>
+              <span className="text-sm text-gray-800 font-medium">{brand}</span>
             </div>
 
             {/* CATEGORY */}
 
             <div className="grid grid-cols-[150px_1fr] sm:grid-cols-[220px_1fr] px-5 py-4">
-              <span className="text-sm text-gray-500">
-                Category
-              </span>
+              <span className="text-sm text-gray-500">Category</span>
 
               <span className="text-sm text-gray-800 font-medium">
                 {categoryName}
@@ -1556,9 +1429,7 @@ useEffect(() => {
 
             {gender && (
               <div className="grid grid-cols-[150px_1fr] sm:grid-cols-[220px_1fr] px-5 py-4">
-                <span className="text-sm text-gray-500">
-                  Gender
-                </span>
+                <span className="text-sm text-gray-500">Gender</span>
 
                 <span className="text-sm text-gray-800 font-medium capitalize">
                   {gender}
@@ -1570,9 +1441,7 @@ useEffect(() => {
 
             {selectedColor && (
               <div className="grid grid-cols-[150px_1fr] sm:grid-cols-[220px_1fr] px-5 py-4">
-                <span className="text-sm text-gray-500">
-                  Selected Color
-                </span>
+                <span className="text-sm text-gray-500">Selected Color</span>
 
                 <span className="text-sm text-gray-800 font-medium capitalize">
                   {selectedColor}
@@ -1584,9 +1453,7 @@ useEffect(() => {
 
             {selectedSize && (
               <div className="grid grid-cols-[150px_1fr] sm:grid-cols-[220px_1fr] px-5 py-4">
-                <span className="text-sm text-gray-500">
-                  Selected Size
-                </span>
+                <span className="text-sm text-gray-500">Selected Size</span>
 
                 <span className="text-sm text-gray-800 font-medium">
                   {selectedSize}
@@ -1598,9 +1465,7 @@ useEffect(() => {
 
             {activeVariant?.sku && (
               <div className="grid grid-cols-[150px_1fr] sm:grid-cols-[220px_1fr] px-5 py-4">
-                <span className="text-sm text-gray-500">
-                  SKU
-                </span>
+                <span className="text-sm text-gray-500">SKU</span>
 
                 <span className="text-sm text-gray-800 font-medium">
                   {activeVariant.sku}
@@ -1611,15 +1476,11 @@ useEffect(() => {
             {/* STOCK */}
 
             <div className="grid grid-cols-[150px_1fr] sm:grid-cols-[220px_1fr] px-5 py-4">
-              <span className="text-sm text-gray-500">
-                Availability
-              </span>
+              <span className="text-sm text-gray-500">Availability</span>
 
               <span
                 className={`text-sm font-medium ${
-                  currentStock > 0
-                    ? "text-green-600"
-                    : "text-red-500"
+                  currentStock > 0 ? "text-green-600" : "text-red-500"
                 }`}
               >
                 {currentStock > 0
@@ -1640,9 +1501,7 @@ useEffect(() => {
           onClick={handleAddToCart}
           disabled={isOutOfStock}
           className={`h-14 flex items-center justify-center gap-2 font-bold text-white ${
-            isOutOfStock
-              ? "bg-gray-400"
-              : "bg-[#ff9f00]"
+            isOutOfStock ? "bg-gray-400" : "bg-[#ff9f00]"
           }`}
         >
           <ShoppingCart size={19} />
@@ -1653,9 +1512,7 @@ useEffect(() => {
           onClick={handleBuyNow}
           disabled={isOutOfStock}
           className={`h-14 flex items-center justify-center gap-2 font-bold text-white ${
-            isOutOfStock
-              ? "bg-gray-400"
-              : "bg-[#fb641b]"
+            isOutOfStock ? "bg-gray-400" : "bg-[#fb641b]"
           }`}
         >
           <Zap size={19} />

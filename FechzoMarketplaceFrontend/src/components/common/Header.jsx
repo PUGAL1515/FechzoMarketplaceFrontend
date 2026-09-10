@@ -300,7 +300,34 @@ export default function Header() {
                   <span className="hidden sm:inline">Login</span>
                 </button>
               )}
+{/* WISHLIST */}
+<Link
+  to="/wishlist"
+  className="relative group flex items-center gap-2 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 shrink-0"
+  style={{
+    background: "linear-gradient(135deg, #e11d48, #be123c)",
+  }}
+  aria-label="Wishlist"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-5 h-5 group-hover:scale-110 transition-transform duration-300"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2.2}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"
+    />
+  </svg>
 
+  <span className="font-semibold text-sm hidden sm:inline tracking-wide">
+    Wishlist
+  </span>
+</Link>
               {/* CART */}
               <Link
                 to="/cart"
