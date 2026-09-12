@@ -7,8 +7,7 @@ import {
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import PropTypes from "prop-types";
-import api from "../../api"; // ← using your api.js
-
+import api from "../../api"; 
 const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
   const [isEmailSelected, setIsEmailSelected] = useState(true);
   const [inputValue, setInputValue] = useState("");
@@ -18,7 +17,6 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [otpErrorMessage, setOtpErrorMessage] = useState("");
   const [resendTimer, setResendTimer] = useState(30);
-
   useEffect(() => {
     if (otpSent && resendTimer > 0) {
       const timer = setInterval(() => {
@@ -27,7 +25,6 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
       return () => clearInterval(timer);
     }
   }, [otpSent, resendTimer]);
-
   const handleToggle = () => {
     setIsEmailSelected(!isEmailSelected);
     setInputValue("");
@@ -37,12 +34,10 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
     setOtpErrorMessage("");
     setResendTimer(30);
   };
-
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
     setErrorMessage("");
   };
-
   const handleOtpChange = (index, value) => {
     if (/^[0-9]?$/.test(value)) {
       const newOtp = [...otp];
@@ -54,14 +49,12 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
       }
     }
   };
-
   const isValidInput = () => {
     const isValidEmail =
       /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(inputValue);
     const isValidPhone = /^[0-9]{10}$/.test(inputValue);
     return isEmailSelected ? isValidEmail : isValidPhone;
   };
-
   // ============================================================
   // SEND OTP
   // ============================================================
@@ -74,17 +67,12 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
       );
       return;
     }
-
     try {
       setLoading(true);
-
-      // Note: no "/api" because baseURL already has it
       const endpoint = isEmailSelected
         ? "/auth/email-otp"
         : "/auth/phone-otp";
-
       await api.post(endpoint, { value: inputValue });
-
       setOtpSent(true);
       setResendTimer(30);
     } catch (error) {
@@ -96,7 +84,6 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
       setLoading(false);
     }
   };
-
   // ============================================================
   // VERIFY OTP
   // ============================================================
@@ -106,31 +93,24 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
       setOtpErrorMessage("Please enter a 6-digit OTP.");
       return;
     }
-
     try {
       setLoading(true);
-
       const response = await api.post("/auth/verify-otp", {
         value: inputValue,
         otp: otpString,
       });
-
       console.log("OTP verification response:", response.data);
-
       if (!response.data?.token || !response.data?.user) {
         throw new Error("Invalid response from server");
       }
-
       // Save login data
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("userProfile", JSON.stringify(response.data.user));
-
       // Notify Header
       if (typeof setIsAuthenticated === "function") {
         setIsAuthenticated(true);
       }
       window.dispatchEvent(new Event("auth-changed"));
-
       // Close modal
       toggleModal();
     } catch (error) {
@@ -189,7 +169,6 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
           >
             ×
           </button>
-
           {/* Progress indicators */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center space-x-3">
@@ -220,14 +199,12 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
               </div>
             </div>
           </div>
-
           <h2
             id="signin-title"
             className="text-3xl font-bold text-center text-indigo-900 mb-8"
           >
             {otpSent ? "Verify OTP" : "Sign In"}
           </h2>
-
           {!otpSent ? (
             <div className="space-y-6">
               {/* Input field */}
@@ -253,7 +230,6 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
                   <FaCheckCircle className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500" />
                 )}
               </div>
-
               {errorMessage && (
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
@@ -264,7 +240,6 @@ const SignInModal = ({ toggleModal, setIsAuthenticated }) => {
                   {errorMessage}
                 </motion.p>
               )}
-
               <div className="flex justify-center mt-6">
                 <motion.button
                   whileHover={{ scale: 1.03 }}

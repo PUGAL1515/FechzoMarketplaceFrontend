@@ -1,27 +1,67 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+
+import {
+  Search,
+  MapPin,
+  User,
+  ChevronDown,
+  ShoppingCart,
+  Heart,
+  Package,
+  MapPinned,
+  LogOut,
+  UserRound,
+  Menu,
+  X,
+  ShoppingBasket,
+  Shirt,
+  Smartphone,
+} from "lucide-react";
+
 import { useCart } from "../../context/CartContext";
 import SignInModal from "./SignInModal";
+import SearchBar from "./SearchBar";
 
 export default function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const { cartCount } = useCart();
+
+  // ============================================================
+  // STATES
+  // ============================================================
 
   const [user, setUser] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
+  const [showLocation, setShowLocation] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const currentCategory = location.pathname.split("/")[1];
 
-  const navItems = [
-    { name: "Grocery", path: "/grocery", icon: "🛒" },
-    { name: "Fashion", path: "/fashion", icon: "👗" },
-    { name: "Electronics", path: "/electronics", icon: "📱" },
-  ];
+  // ============================================================
+  // ONLY 3 CATEGORIES
+  // ============================================================
 
-  // ============================================================
-  // LOAD LOGGED-IN USER
-  // ============================================================
+  const navItems = [
+    {
+      name: "Grocery",
+      path: "/grocery",
+      icon: ShoppingBasket,
+    },
+    {
+      name: "Fashion",
+      path: "/fashion",
+      icon: Shirt,
+    },
+    {
+      name: "Electronics",
+      path: "/electronics",
+      icon: Smartphone,
+    },
+  ];
   const loadUser = () => {
     try {
       const token =
@@ -44,8 +84,10 @@ export default function Header() {
 
   useEffect(() => {
     loadUser();
+
     window.addEventListener("storage", loadUser);
     window.addEventListener("auth-changed", loadUser);
+
     const timer = setTimeout(loadUser, 300);
 
     return () => {
@@ -56,21 +98,40 @@ export default function Header() {
   }, []);
 
   // ============================================================
-  // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
+  // CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
   // ============================================================
+
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (showProfile && !e.target.closest(".profile-dropdown")) {
+    const handleClickOutside = (event) => {
+      if (
+        showProfile &&
+        !event.target.closest(".profile-dropdown")
+      ) {
         setShowProfile(false);
       }
+
+      if (
+        showLocation &&
+        !event.target.closest(".location-dropdown")
+      ) {
+        setShowLocation(false);
+      }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showProfile]);
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, [showProfile, showLocation]);
 
   // ============================================================
   // LOGOUT
   // ============================================================
+
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("jwt_token");
@@ -79,15 +140,19 @@ export default function Header() {
 
     setUser(null);
     setShowProfile(false);
+
     window.dispatchEvent(new Event("auth-changed"));
-    window.location.href = "/";
+
+    navigate("/");
   };
 
   // ============================================================
-  // HELPERS
+  // USER NAME
   // ============================================================
+
   const getUserName = () => {
     if (!user) return "Account";
+
     return (
       user.name ||
       user.fullName ||
@@ -98,310 +163,1044 @@ export default function Header() {
     );
   };
 
-  const getUserInitial = () => getUserName().charAt(0).toUpperCase();
+  // ============================================================
+  // USER INITIAL
+  // ============================================================
+
+  const getUserInitial = () => {
+    return getUserName().charAt(0).toUpperCase();
+  };
+
+  // ============================================================
+  // USER AVATAR
+  // ============================================================
 
   const avatarUrl =
-    user?.profilePicture || user?.profileImage || user?.avatar || null;
+    user?.profilePicture ||
+    user?.profileImage ||
+    user?.avatar ||
+    null;
+
+ 
+
+  // ============================================================
+  // ACTIVE CATEGORY
+  // ============================================================
+
+  const isActiveCategory = (item) => {
+    if (item.path === "/") {
+      return location.pathname === "/";
+    }
+
+    return currentCategory === item.path.substring(1);
+  };
+
+  // ============================================================
+  // RENDER
+  // ============================================================
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_4px_30px_rgba(30,58,138,0.08)]">
-        <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
-          {/* MAIN HEADER ROW */}
-          <div className="flex items-center justify-between h-14 sm:h-16 md:h-17.5 gap-2 sm:gap-4">
-            {/* LOGO */}
-            <Link
-              to="/"
-              className="flex items-center gap-2 sm:gap-2.5 group shrink-0"
-              aria-label="Fechzo Home"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-indigo-900 rounded-xl sm:rounded-2xl blur opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
-                <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/30 bg-linear-to-br from-[#1e3a8a] to-[#02066f] group-hover:scale-105 transition-transform duration-300">
-                  <span className="text-white font-black text-lg sm:text-xl tracking-tighter">
-                    F
-                  </span>
-                </div>
-              </div>
+      {/* ========================================================
+          HEADER
+      ======================================================== */}
 
-              <div className="flex flex-col">
-                <span className="text-lg sm:text-xl font-extrabold tracking-tight bg-linear-to-r from-[#1e3a8a] to-[#02066f] bg-clip-text text-transparent">
-                  Fechzo
-                </span>
-                <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 -mt-0.5 hidden xs:block">
-                  Shop Smart
-                </span>
-              </div>
-            </Link>
+      <header className="sticky top-0 z-[100] bg-white border-b border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
 
-            {/* DESKTOP NAVIGATION */}
-            <nav className="hidden md:flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/50">
-              {navItems.map((item) => {
-                const isActive = currentCategory === item.path.slice(1);
+        {/* ======================================================
+            TOP HEADER
+        ====================================================== */}
 
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`relative px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${
-                      isActive
-                        ? "text-white shadow-lg shadow-blue-900/30"
-                        : "text-slate-600 hover:text-[#1e3a8a] hover:bg-white/80"
-                    }`}
-                    style={
-                      isActive
-                        ? { background: "linear-gradient(135deg, #1e3a8a, #02066f)" }
-                        : {}
-                    }
+        <div className="bg-white">
+
+          <div className="max-w-[1500px] mx-auto px-4 lg:px-8">
+
+            <div className="h-[68px] flex items-center gap-4 lg:gap-6">
+
+              {/* ==================================================
+                  FECHZO LOGO
+              ================================================== */}
+
+              <Link
+                to="/"
+                className="flex items-center shrink-0 group"
+                aria-label="Fechzo Home"
+              >
+                <div className="flex items-center gap-2">
+
+                  {/* Logo Icon */}
+
+                  <div
+                    className="
+                      w-10
+                      h-10
+                      rounded-xl
+                      bg-gradient-to-br
+                      from-[#1e3a8a]
+                      to-[#02066f]
+                      flex
+                      items-center
+                      justify-center
+                      shadow-md
+                      group-hover:scale-105
+                      transition-transform
+                    "
                   >
-                    <span className="text-base">{item.icon}</span>
-                    {item.name}
-                    {isActive && (
-                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-sm"></span>
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* RIGHT SIDE */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {user ? (
-                <div className="relative profile-dropdown">
-                  <button
-                    type="button"
-                    onClick={() => setShowProfile((prev) => !prev)}
-                    className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl hover:bg-slate-100 transition-all duration-200"
-                  >
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-[#1e3a8a] to-[#02066f] text-white flex items-center justify-center font-bold text-sm shadow-md overflow-hidden">
-                      {avatarUrl ? (
-                        <img
-                          src={avatarUrl}
-                          alt={getUserName()}
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                      ) : (
-                        getUserInitial()
-                      )}
-                    </div>
-
-                    <div className="hidden lg:flex flex-col items-start">
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        Welcome
-                      </span>
-                      <span className="text-sm font-semibold text-slate-700 max-w-25 truncate">
-                        {getUserName()}
-                      </span>
-                    </div>
-
-                    <svg
-                      className={`hidden sm:block w-4 h-4 text-slate-500 transition-transform ${
-                        showProfile ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
+                    <span
+                      className="
+                        text-white
+                        text-2xl
+                        font-black
+                        italic
+                      "
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
+                      F
+                    </span>
+                  </div>
 
-                  {showProfile && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden z-100">
-                      <div className="px-4 py-4 bg-linear-to-br from-slate-50 to-white border-b border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-linear-to-br from-[#1e3a8a] to-[#02066f] text-white flex items-center justify-center font-bold overflow-hidden">
-                            {avatarUrl ? (
-                              <img
-                                src={avatarUrl}
-                                alt={getUserName()}
-                                className="w-full h-full rounded-full object-cover"
-                              />
-                            ) : (
-                              getUserInitial()
-                            )}
-                          </div>
+                  {/* Logo Text */}
 
-                          <div className="min-w-0">
-                            <p className="font-bold text-slate-800 truncate">
-                              {getUserName()}
-                            </p>
-                            {user.email && (
-                              <p className="text-xs text-slate-500 truncate">
-                                {user.email}
-                              </p>
-                            )}
-                            {user.phone && (
-                              <p className="text-xs text-slate-500 truncate">
-                                {user.phone}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                  <div className="leading-none">
 
-                      <div className="p-2">
-                        <Link
-                          to="/profile"
-                          onClick={() => setShowProfile(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-700 hover:bg-slate-100 transition"
-                        >
-                          <span>👤</span>
-                          My Profile
-                        </Link>
-
-                        <Link
-                          to="/orders"
-                          onClick={() => setShowProfile(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-700 hover:bg-slate-100 transition"
-                        >
-                          <span>📦</span>
-                          My Orders
-                        </Link>
-
-                        <Link
-                          to="/addresses"
-                          onClick={() => setShowProfile(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-700 hover:bg-slate-100 transition"
-                        >
-                          <span>📍</span>
-                          Addresses
-                        </Link>
-                      </div>
-
-                      <div className="border-t border-slate-100 p-2">
-                        <button
-                          type="button"
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 transition"
-                        >
-                          <span>🚪</span>
-                          Logout
-                        </button>
-                      </div>
+                    <div
+                      className="
+                        text-xl
+                        sm:text-2xl
+                        font-extrabold
+                        tracking-tight
+                        text-[#1e3a8a]
+                      "
+                    >
+                      Fechzo
                     </div>
-                  )}
+
+                    <div
+                      className="
+                        text-[9px]
+                        sm:text-[10px]
+                        text-gray-400
+                        font-medium
+                        mt-0.5
+                      "
+                    >
+                      Shop Smart
+                    </div>
+
+                  </div>
+
                 </div>
-              ) : (
+              </Link>
+
+             <SearchBar />
+
+              {/* ==================================================
+                  LOCATION
+              ================================================== */}
+
+              <div
+                className="
+                  relative
+                  location-dropdown
+                  hidden
+                  xl:block
+                "
+              >
+
                 <button
                   type="button"
-                  onClick={() => setShowSignIn(true)}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl sm:rounded-2xl text-sm font-semibold text-white shadow-lg shadow-blue-900/25 hover:scale-[1.03] active:scale-95 transition-all"
-                  style={{
-                    background: "linear-gradient(135deg, #1e3a8a, #02066f)",
-                  }}
+                  onClick={() =>
+                    setShowLocation((prev) => !prev)
+                  }
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    px-2
+                    py-2
+                    rounded-lg
+                    hover:bg-gray-50
+                    transition
+                  "
                 >
-                  <span>👤</span>
-                  <span className="hidden sm:inline">Login</span>
-                </button>
-              )}
-{/* WISHLIST */}
-<Link
-  to="/wishlist"
-  className="relative group flex items-center gap-2 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 shrink-0"
-  style={{
-    background: "linear-gradient(135deg, #e11d48, #be123c)",
-  }}
-  aria-label="Wishlist"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="w-5 h-5 group-hover:scale-110 transition-transform duration-300"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={2.2}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"
-    />
-  </svg>
 
-  <span className="font-semibold text-sm hidden sm:inline tracking-wide">
-    Wishlist
-  </span>
-</Link>
-              {/* CART */}
+                  <MapPin
+                    size={21}
+                    strokeWidth={2}
+                    className="text-gray-800"
+                  />
+
+                  <div className="text-left">
+
+                    <div className="text-[10px] text-gray-500">
+                      Deliver to
+                    </div>
+
+                    <div
+                      className="
+                        text-sm
+                        font-semibold
+                        text-gray-800
+                        flex
+                        items-center
+                        gap-1
+                        whitespace-nowrap
+                      "
+                    >
+                      Select location
+
+                      <ChevronDown
+                        size={14}
+                        className={
+                          showLocation
+                            ? "rotate-180"
+                            : ""
+                        }
+                      />
+                    </div>
+
+                  </div>
+
+                </button>
+
+                {/* LOCATION DROPDOWN */}
+
+                {showLocation && (
+                  <div
+                    className="
+                      absolute
+                      right-0
+                      top-[52px]
+                      w-[300px]
+                      bg-white
+                      border
+                      border-gray-200
+                      rounded-xl
+                      shadow-2xl
+                      p-4
+                      z-[200]
+                    "
+                  >
+
+                    <div className="flex items-center gap-3 mb-4">
+
+                      <div
+                        className="
+                          w-10
+                          h-10
+                          rounded-full
+                          bg-blue-50
+                          flex
+                          items-center
+                          justify-center
+                        "
+                      >
+                        <MapPin
+                          size={20}
+                          className="text-blue-600"
+                        />
+                      </div>
+
+                      <div>
+
+                        <div className="font-semibold text-gray-800">
+                          Delivery Location
+                        </div>
+
+                        <div className="text-xs text-gray-500">
+                          Choose your delivery location
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                    <button
+                      type="button"
+                      className="
+                        w-full
+                        flex
+                        items-center
+                        justify-center
+                        gap-2
+                        py-3
+                        px-4
+                        rounded-lg
+                        bg-blue-50
+                        text-blue-700
+                        border
+                        border-blue-100
+                        hover:bg-blue-100
+                        transition
+                        text-sm
+                        font-semibold
+                      "
+                    >
+                      <MapPinned size={18} />
+
+                      Select delivery location
+                    </button>
+
+                  </div>
+                )}
+
+              </div>
+
+              {/* ==================================================
+                  LOGIN / USER
+              ================================================== */}
+
+              <div className="relative profile-dropdown shrink-0">
+
+                {user ? (
+
+                  <>
+                    {/* LOGGED USER */}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowProfile((prev) => !prev)
+                      }
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                        px-2
+                        sm:px-3
+                        py-2
+                        rounded-lg
+                        hover:bg-gray-50
+                        transition
+                      "
+                    >
+
+                      <div
+                        className="
+                          w-9
+                          h-9
+                          rounded-full
+                          bg-gradient-to-br
+                          from-[#1e3a8a]
+                          to-[#02066f]
+                          text-white
+                          flex
+                          items-center
+                          justify-center
+                          font-bold
+                          overflow-hidden
+                        "
+                      >
+
+                        {avatarUrl ? (
+
+                          <img
+                            src={avatarUrl}
+                            alt={getUserName()}
+                            className="
+                              w-full
+                              h-full
+                              object-cover
+                            "
+                          />
+
+                        ) : (
+
+                          getUserInitial()
+
+                        )}
+
+                      </div>
+
+                      <div className="hidden lg:block text-left">
+
+                        <div className="text-[10px] text-gray-500">
+                          Welcome
+                        </div>
+
+                        <div
+                          className="
+                            text-sm
+                            font-semibold
+                            text-gray-800
+                            max-w-[90px]
+                            truncate
+                          "
+                        >
+                          {getUserName()}
+                        </div>
+
+                      </div>
+
+                      <ChevronDown
+                        size={15}
+                        className={`
+                          hidden
+                          sm:block
+                          text-gray-500
+                          transition-transform
+                          ${
+                            showProfile
+                              ? "rotate-180"
+                              : ""
+                          }
+                        `}
+                      />
+
+                    </button>
+
+                    {/* ==================================================
+                        PROFILE DROPDOWN
+                    ================================================== */}
+
+                    {showProfile && (
+                      <div
+                        className="
+                          absolute
+                          right-0
+                          top-[53px]
+                          w-[280px]
+                          bg-white
+                          rounded-xl
+                          border
+                          border-gray-200
+                          shadow-2xl
+                          overflow-hidden
+                          z-[200]
+                        "
+                      >
+
+                        {/* USER INFO */}
+
+                        <div
+                          className="
+                            px-4
+                            py-4
+                            bg-gray-50
+                            border-b
+                            border-gray-100
+                          "
+                        >
+
+                          <div className="flex items-center gap-3">
+
+                            <div
+                              className="
+                                w-12
+                                h-12
+                                rounded-full
+                                bg-gradient-to-br
+                                from-[#1e3a8a]
+                                to-[#02066f]
+                                text-white
+                                flex
+                                items-center
+                                justify-center
+                                font-bold
+                                overflow-hidden
+                                shrink-0
+                              "
+                            >
+
+                              {avatarUrl ? (
+
+                                <img
+                                  src={avatarUrl}
+                                  alt={getUserName()}
+                                  className="
+                                    w-full
+                                    h-full
+                                    object-cover
+                                  "
+                                />
+
+                              ) : (
+
+                                getUserInitial()
+
+                              )}
+
+                            </div>
+
+                            <div className="min-w-0">
+
+                              <p
+                                className="
+                                  font-bold
+                                  text-gray-800
+                                  truncate
+                                "
+                              >
+                                {getUserName()}
+                              </p>
+
+                              {user.email && (
+                                <p
+                                  className="
+                                    text-xs
+                                    text-gray-500
+                                    truncate
+                                    mt-0.5
+                                  "
+                                >
+                                  {user.email}
+                                </p>
+                              )}
+
+                              {user.phone && (
+                                <p
+                                  className="
+                                    text-xs
+                                    text-gray-500
+                                    truncate
+                                  "
+                                >
+                                  {user.phone}
+                                </p>
+                              )}
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                        {/* PROFILE MENU */}
+
+                        <div className="p-2">
+
+                          <Link
+                            to="/profile"
+                            onClick={() =>
+                              setShowProfile(false)
+                            }
+                            className="
+                              flex
+                              items-center
+                              gap-3
+                              px-3
+                              py-3
+                              rounded-lg
+                              text-sm
+                              text-gray-700
+                              hover:bg-gray-50
+                              transition
+                            "
+                          >
+                            <UserRound size={18} />
+
+                            My Profile
+                          </Link>
+
+                          <Link
+                            to="/orders"
+                            onClick={() =>
+                              setShowProfile(false)
+                            }
+                            className="
+                              flex
+                              items-center
+                              gap-3
+                              px-3
+                              py-3
+                              rounded-lg
+                              text-sm
+                              text-gray-700
+                              hover:bg-gray-50
+                              transition
+                            "
+                          >
+                            <Package size={18} />
+
+                            My Orders
+                          </Link>
+
+                          <Link
+                            to="/addresses"
+                            onClick={() =>
+                              setShowProfile(false)
+                            }
+                            className="
+                              flex
+                              items-center
+                              gap-3
+                              px-3
+                              py-3
+                              rounded-lg
+                              text-sm
+                              text-gray-700
+                              hover:bg-gray-50
+                              transition
+                            "
+                          >
+                            <MapPinned size={18} />
+
+                            Addresses
+                          </Link>
+
+                        </div>
+
+                        {/* LOGOUT */}
+
+                        <div
+                          className="
+                            border-t
+                            border-gray-100
+                            p-2
+                          "
+                        >
+
+                          <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="
+                              w-full
+                              flex
+                              items-center
+                              gap-3
+                              px-3
+                              py-3
+                              rounded-lg
+                              text-sm
+                              text-red-600
+                              hover:bg-red-50
+                              transition
+                            "
+                          >
+                            <LogOut size={18} />
+
+                            Logout
+                          </button>
+
+                        </div>
+
+                      </div>
+                    )}
+
+                  </>
+
+                ) : (
+
+                  /* ==================================================
+                     LOGIN BUTTON
+                  ================================================== */
+
+                  <button
+                    type="button"
+                    onClick={() => setShowSignIn(true)}
+                    className="
+                      flex
+                      items-center
+                      gap-2
+                      px-3
+                      sm:px-4
+                      py-2.5
+                      rounded-lg
+                      text-gray-800
+                      hover:bg-gray-50
+                      transition
+                      font-semibold
+                      text-sm
+                    "
+                  >
+
+                    <User size={20} />
+
+                    <span className="hidden sm:block">
+                      Login
+                    </span>
+
+                    <ChevronDown
+                      size={15}
+                      className="hidden sm:block"
+                    />
+
+                  </button>
+
+                )}
+
+              </div>
+
+              {/* ==================================================
+                  WISHLIST
+              ================================================== */}
+
+              <Link
+                to="/wishlist"
+                className="
+                  hidden
+                  sm:flex
+                  items-center
+                  gap-2
+                  px-2
+                  py-2
+                  text-gray-800
+                  hover:text-blue-700
+                  transition
+                  shrink-0
+                "
+                aria-label="Wishlist"
+              >
+
+                <Heart
+                  size={23}
+                  strokeWidth={1.8}
+                />
+
+                <span className="hidden lg:block text-sm font-medium">
+                  Wishlist
+                </span>
+
+              </Link>
+
+              {/* ==================================================
+                  CART
+              ================================================== */}
+
               <Link
                 to="/cart"
-                className="relative group flex items-center gap-2 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-lg shadow-blue-900/25 hover:shadow-blue-900/40 shrink-0"
-                style={{
-                  background: "linear-gradient(135deg, #1e3a8a, #02066f)",
-                }}
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  px-2
+                  py-2
+                  text-gray-800
+                  hover:text-blue-700
+                  transition
+                  shrink-0
+                "
                 aria-label={`Cart with ${cartCount} items`}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 group-hover:rotate-[-8deg] transition-transform duration-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
 
-                <span className="font-semibold text-sm hidden sm:inline tracking-wide">
+                <div className="relative">
+
+                  <ShoppingCart
+                    size={25}
+                    strokeWidth={1.8}
+                  />
+
+                  {cartCount > 0 && (
+                    <span
+                      className="
+                        absolute
+                        -top-2
+                        -right-2
+                        min-w-[18px]
+                        h-[18px]
+                        px-1
+                        bg-red-500
+                        text-white
+                        rounded-full
+                        text-[10px]
+                        font-bold
+                        flex
+                        items-center
+                        justify-center
+                        border-2
+                        border-white
+                      "
+                    >
+                      {cartCount > 99
+                        ? "99+"
+                        : cartCount}
+                    </span>
+                  )}
+
+                </div>
+
+                <span className="hidden lg:block text-sm font-medium">
                   Cart
                 </span>
 
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1.5 bg-linear-to-br from-rose-500 to-pink-600 text-white text-[11px] font-bold rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-2 border-white">
-                    {cartCount > 9 ? "9+" : cartCount}
-                  </span>
-                )}
               </Link>
-            </div>
-          </div>
 
-          {/* MOBILE NAVIGATION */}
-          <div className="md:hidden pb-3 -mt-1">
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {/* ==================================================
+                  MOBILE MENU BUTTON
+              ================================================== */}
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowMobileMenu((prev) => !prev)
+                }
+                className="
+                  md:hidden
+                  p-2
+                  rounded-lg
+                  hover:bg-gray-100
+                  transition
+                "
+                aria-label="Menu"
+              >
+
+                {showMobileMenu ? (
+                  <X size={23} />
+                ) : (
+                  <Menu size={23} />
+                )}
+
+              </button>
+
+            </div>
+
+            {/* ====================================================
+                MOBILE SEARCH
+            ==================================================== */}
+
+         <SearchBar mobile />
+
+          </div>
+        </div>
+
+        {/* ==========================================================
+            CATEGORY BAR
+        ========================================================== */}
+
+        <div
+          className="
+            border-t
+            border-gray-100
+            bg-white
+          "
+        >
+
+          <div className="max-w-[1500px] mx-auto px-4 lg:px-8">
+
+            <div
+              className="
+                flex
+                items-center
+                justify-center
+                md:justify-start
+                gap-4
+                sm:gap-8
+                overflow-x-auto
+                scrollbar-hide
+              "
+            >
+
               {navItems.map((item) => {
-                const isActive = currentCategory === item.path.slice(1);
+
+                const active = isActiveCategory(item);
+
+                const Icon = item.icon;
 
                 return (
                   <Link
-                    key={item.path}
+                    key={item.name}
                     to={item.path}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 shrink-0 ${
-                      isActive
-                        ? "text-white shadow-md shadow-blue-900/25"
-                        : "bg-slate-100 text-slate-600 active:scale-95"
-                    }`}
-                    style={
-                      isActive
-                        ? { background: "linear-gradient(135deg, #1e3a8a, #02066f)" }
-                        : {}
-                    }
+                    className={`
+                      relative
+                      flex
+                      flex-col
+                      items-center
+                      justify-center
+                      min-w-[90px]
+                      sm:min-w-[105px]
+                      py-3
+                      gap-1.5
+                      text-center
+                      whitespace-nowrap
+                      transition-all
+                      group
+                      ${
+                        active
+                          ? "text-[#1e3a8a]"
+                          : "text-gray-700 hover:text-[#1e3a8a]"
+                      }
+                    `}
                   >
-                    <span className="text-base">{item.icon}</span>
-                    {item.name}
+
+                    {/* CATEGORY ICON */}
+
+                    <div
+                      className={`
+                        w-11
+                        h-11
+                        rounded-full
+                        flex
+                        items-center
+                        justify-center
+                        transition-all
+                        ${
+                          active
+                            ? "bg-blue-50"
+                            : "bg-gray-50 group-hover:bg-blue-50"
+                        }
+                      `}
+                    >
+
+                      <Icon
+                        size={27}
+                        strokeWidth={1.8}
+                      />
+
+                    </div>
+
+                    {/* CATEGORY NAME */}
+
+                    <span
+                      className={`
+                        text-[13px]
+                        sm:text-sm
+                        ${
+                          active
+                            ? "font-bold"
+                            : "font-medium"
+                        }
+                      `}
+                    >
+                      {item.name}
+                    </span>
+
+                    {/* ACTIVE LINE */}
+
+                    {active && (
+                      <span
+                        className="
+                          absolute
+                          bottom-0
+                          left-2
+                          right-2
+                          h-[3px]
+                          bg-[#1e3a8a]
+                          rounded-t-full
+                        "
+                      />
+                    )}
+
                   </Link>
                 );
               })}
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* ==========================================================
+            MOBILE MENU
+        ========================================================== */}
+
+        {showMobileMenu && (
+          <div
+            className="
+              md:hidden
+              border-t
+              border-gray-100
+              bg-white
+              shadow-lg
+            "
+          >
+
+            <div className="p-4">
+
+              <div className="grid grid-cols-3 gap-3">
+
+                {navItems.map((item) => {
+
+                  const Icon = item.icon;
+
+                  const active = isActiveCategory(item);
+
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      onClick={() =>
+                        setShowMobileMenu(false)
+                      }
+                      className={`
+                        flex
+                        flex-col
+                        items-center
+                        justify-center
+                        gap-2
+                        p-3
+                        rounded-xl
+                        ${
+                          active
+                            ? "bg-blue-50 text-blue-700"
+                            : "bg-gray-50 text-gray-700"
+                        }
+                      `}
+                    >
+
+                      <Icon
+                        size={25}
+                        strokeWidth={1.8}
+                      />
+
+                      <span className="text-xs font-semibold">
+                        {item.name}
+                      </span>
+
+                    </Link>
+                  );
+                })}
+
+              </div>
+
+              {/* MOBILE LOCATION */}
+
+              <div
+                className="
+                  mt-4
+                  pt-4
+                  border-t
+                  border-gray-100
+                "
+              >
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowLocation((prev) => !prev)
+                  }
+                  className="
+                    w-full
+                    flex
+                    items-center
+                    gap-3
+                    px-3
+                    py-3
+                    rounded-lg
+                    hover:bg-gray-50
+                    text-left
+                  "
+                >
+
+                  <MapPin
+                    size={20}
+                    className="text-gray-700"
+                  />
+                  <div>
+                    <div className="text-xs text-gray-500">
+                      Deliver to
+                    </div>
+                    <div className="text-sm font-semibold">
+                      Select delivery location
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </header>
 
-      {/* SIGN IN MODAL */}
+      {/* ==========================================================
+          SIGN IN MODAL
+      ========================================================== */}
+
       {showSignIn && (
         <SignInModal
           toggleModal={() => setShowSignIn(false)}
           setIsAuthenticated={() => {
-            window.dispatchEvent(new Event("auth-changed"));
+            window.dispatchEvent(
+              new Event("auth-changed")
+            );
           }}
         />
       )}
