@@ -22,6 +22,7 @@ import ElectronicsProducts from "./components/electronics/ElectronicsProducts";
 
 // Store related
 import StoreRegisterForm from "./pages/store/StoreRegisterForm";
+import SearchPage from "./pages/home/Searchpage";
 import StoreAdmin from "./pages/storeAdmin/StoreAdmin";
 import StoreLogin from "./pages/storeAdmin/StoreLogin";
 
@@ -114,6 +115,7 @@ path="/wishlist"element={<Wishlist />}/>
           {/* Optional: 404 */}
           {/* <Route path="*" element={<NotFound />} /> */}
           <Route path="/order" element={<OrderPage />} />
+          <Route path="/search" element={<SearchPage />} />
         </Routes>
       </main>
     </BrowserRouter>

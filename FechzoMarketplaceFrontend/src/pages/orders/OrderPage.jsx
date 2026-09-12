@@ -11,8 +11,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import { useCart } from "../../context/CartContext";
-     
+import { useCart } from "../../context/CartContext";     
 export default function OrderPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,7 +88,6 @@ export default function OrderPage() {
   // ORDER ITEMS
   // ============================================================
   const orderItems = useMemo(() => {
-    // Wishlist / Buy Now can pass a single product
     if (location.state?.product) {
       const product = location.state.product;
       return [
@@ -104,7 +102,6 @@ export default function OrderPage() {
         },
       ];
     }
-    // Normal cart checkout
     return cart || [];
   }, [cart, location.state]);
   // ============================================================
@@ -113,10 +110,8 @@ export default function OrderPage() {
   const getVariant = (item) => {
     return item?.selectedVariant || item?.variant || null;
   };
-
   const getPrice = (item) => {
     const variant = getVariant(item);
-
     if (
       variant?.price !== undefined &&
       variant?.price !== null &&
@@ -124,7 +119,6 @@ export default function OrderPage() {
     ) {
       return Number(variant.price) || 0;
     }
-
     if (
       item?.discountPrice !== undefined &&
       item?.discountPrice !== null &&
@@ -132,13 +126,10 @@ export default function OrderPage() {
     ) {
       return Number(item.discountPrice);
     }
-
     return Number(item?.price || 0);
   };
-
   const getImage = (item) => {
     const variant = getVariant(item);
-
     return (
       variant?.image ||
       variant?.images?.[0] ||
@@ -148,10 +139,8 @@ export default function OrderPage() {
       "https://via.placeholder.com/150x150?text=Product"
     );
   };
-
   const getAttributes = (item) => {
     const variant = getVariant(item);
-
     if (
       variant?.attributes &&
       typeof variant.attributes === "object" &&
@@ -159,7 +148,6 @@ export default function OrderPage() {
     ) {
       return variant.attributes;
     }
-
     if (
       item?.selectedAttributes &&
       typeof item.selectedAttributes === "object" &&
@@ -167,18 +155,14 @@ export default function OrderPage() {
     ) {
       return item.selectedAttributes;
     }
-
     return {};
   };
-
   // ============================================================
   // TOTAL
   // ============================================================
-
   const subtotal = orderItems.reduce((total, item) => {
     const price = getPrice(item);
     const quantity = Number(item?.quantity) || 1;
-
     return total + price * quantity;
   }, 0);
 
