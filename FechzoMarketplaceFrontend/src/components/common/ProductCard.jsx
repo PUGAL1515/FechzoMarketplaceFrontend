@@ -1,700 +1,960 @@
-import { useMemo, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link } from "react-router-dom";
+import {
+  Check,
+  Minus,
+  Plus,
+  ShoppingCart,
+} from "lucide-react";
+
 import { useCart } from "../../context/CartContext";
 
-export default function ProductCard({ product, category }) {
-  const { addToCart } = useCart();
+export default function ProductCard({ product }) {
+  const {
+    cart = [],
+    addToCart,
+    updateQuantity,
+    getCartItemId,
+  } = useCart();
 
-  // ============================================================
-  // VARIANTS
-  // ============================================================
+  const [selectedAttributes, setSelectedAttributes] =
+    useState({});
 
-  const variants = Array.isArray(product?.variants)
-    ? product.variants
-    : [];
+  const [showAddedAlert, setShowAddedAlert] =
+    useState(false);
 
-  // ============================================================
-  // GET VARIANT ATTRIBUTES
-  // Supports:
-  // attributes: {
-  //   color: "Black",
-  //   size: "M",
-  //   ram: "8 GB"
-  // }
-  //
-  // Also supports older structure / SKU fallback.
-  // ============================================================
+  const alertTimerRef = useRef(null);
 
-  const normalizeKey = (key) => {
-    return String(key || "")
+  /*
+  |--------------------------------------------------------------------------
+  | Normalize key
+  |--------------------------------------------------------------------------
+  */
+
+  const normalizeKey = (value) => {
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return "";
+    }
+
+    return String(value)
       .trim()
       .toLowerCase()
-      .replace(/[\s_-]+/g, "");
+      .replace(/\s+/g, "");
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Get Variant Attributes
+  |--------------------------------------------------------------------------
+  */
+
   const getVariantAttributes = (variant) => {
+    if (!variant) {
+      return {};
+    }
+
     const attributes = {};
 
-    // ----------------------------------------------------------
-    // New structure
-    // ----------------------------------------------------------
-
+    /*
+     * New dynamic attributes object
+     */
     if (
-      variant?.attributes &&
+      variant.attributes &&
       typeof variant.attributes === "object" &&
       !Array.isArray(variant.attributes)
     ) {
-      Object.entries(variant.attributes).forEach(([key, value]) => {
+      Object.entries(
+        variant.attributes
+      ).forEach(([key, value]) => {
         if (
-          value !== undefined &&
           value !== null &&
-          String(value).trim() !== ""
+          value !== undefined &&
+          value !== ""
         ) {
           attributes[key] = value;
         }
       });
     }
 
-    // ----------------------------------------------------------
-    // Support common direct fields too
-    // ----------------------------------------------------------
-
-    const possibleFields = [
+    /*
+     * Support direct variant fields
+     */
+    const directFields = [
       "color",
+      "colour",
       "size",
-      "ram",
+      "material",
       "storage",
+      "ram",
       "capacity",
       "weight",
-      "material",
       "length",
-      "width",
-      "height",
-      "memory",
-      "variant",
-      "model",
-      "type",
+      "flavour",
+      "flavor",
+      "pack",
     ];
 
-    possibleFields.forEach((field) => {
+    directFields.forEach((field) => {
       if (
-        variant?.[field] !== undefined &&
-        variant?.[field] !== null &&
-        String(variant[field]).trim() !== ""
+        variant[field] !== null &&
+        variant[field] !== undefined &&
+        variant[field] !== ""
       ) {
         if (!attributes[field]) {
-          attributes[field] = variant[field];
+          attributes[field] =
+            variant[field];
         }
       }
     });
 
-    // ----------------------------------------------------------
-    // OLD SKU fallback
-    //
-    // Example:
-    // TS-BLK-S
-    // TS-BLK-M
-    //
-    // We can infer:
-    // BLK -> Black
-    // S   -> Size S
-    // ----------------------------------------------------------
-
-    if (Object.keys(attributes).length === 0 && variant?.sku) {
-      const skuParts = String(variant.sku)
-        .split("-")
-        .map((item) => item.trim())
-        .filter(Boolean);
-
-      if (skuParts.length >= 2) {
-        const colorMap = {
-          BLK: "Black",
-          BLACK: "Black",
-          WHT: "White",
-          WHITE: "White",
-          RED: "Red",
-          BLU: "Blue",
-          BLUE: "Blue",
-          GRN: "Green",
-          GREEN: "Green",
-          YLW: "Yellow",
-          YELLOW: "Yellow",
-          PNK: "Pink",
-          PINK: "Pink",
-          GRY: "Grey",
-          GREY: "Grey",
-          GRAY: "Gray",
-          ORG: "Orange",
-          ORANGE: "Orange",
-          PUR: "Purple",
-          PURPLE: "Purple",
-          NAVY: "Navy",
-          BROWN: "Brown",
-        };
-
-        const sizeValues = [
-          "XS",
-          "S",
-          "M",
-          "L",
-          "XL",
-          "XXL",
-          "XXXL",
-          "2XL",
-          "3XL",
-          "4XL",
-        ];
-
-        const lastPart = skuParts[skuParts.length - 1].toUpperCase();
-
-        // Example TS-BLK-S
-        if (colorMap[skuParts[skuParts.length - 2]?.toUpperCase()]) {
-          attributes.color =
-            colorMap[skuParts[skuParts.length - 2].toUpperCase()];
-        }
-
-        if (sizeValues.includes(lastPart)) {
-          attributes.size = lastPart;
-        }
-      }
+    /*
+     * SKU fallback
+     */
+    if (
+      Object.keys(attributes).length === 0 &&
+      variant.sku
+    ) {
+      attributes.sku = variant.sku;
     }
 
     return attributes;
   };
 
-  // ============================================================
-  // BUILD ATTRIBUTE DATA
-  // ============================================================
+  /*
+  |--------------------------------------------------------------------------
+  | Attribute Data
+  |--------------------------------------------------------------------------
+  */
 
   const attributeData = useMemo(() => {
+    const variants =
+      Array.isArray(product?.variants)
+        ? product.variants
+        : [];
+
     const data = {};
 
     variants.forEach((variant) => {
-      const attributes = getVariantAttributes(variant);
-
-      Object.entries(attributes).forEach(([key, value]) => {
-        if (!data[key]) {
-          data[key] = [];
-        }
-
-        const exists = data[key].some(
-          (item) =>
-            String(item).toLowerCase() === String(value).toLowerCase()
+      const attributes =
+        getVariantAttributes(
+          variant
         );
 
-        if (!exists) {
-          data[key].push(value);
+      Object.entries(attributes).forEach(
+        ([key, value]) => {
+          const normalizedKey =
+            normalizeKey(key);
+
+          if (!normalizedKey) {
+            return;
+          }
+
+          if (!data[normalizedKey]) {
+            data[normalizedKey] = {
+              key,
+              values: [],
+            };
+          }
+
+          const exists =
+            data[
+              normalizedKey
+            ].values.some(
+              (existingValue) =>
+                normalizeKey(
+                  existingValue
+                ) ===
+                normalizeKey(value)
+            );
+
+          if (!exists) {
+            data[
+              normalizedKey
+            ].values.push(value);
+          }
         }
-      });
-    });
-
-    return data;
-  }, [variants]);
-
-  // ============================================================
-  // SELECTED VARIANT
-  // ============================================================
-
-  const [selectedAttributes, setSelectedAttributes] = useState({});
-
-  const getAttributeLabel = (key) => {
-    const labels = {
-      color: "Color",
-      size: "Size",
-      ram: "RAM",
-      storage: "Storage",
-      capacity: "Capacity",
-      weight: "Weight",
-      material: "Material",
-      length: "Length",
-      width: "Width",
-      height: "Height",
-      memory: "Memory",
-      model: "Model",
-      type: "Type",
-      variant: "Variant",
-    };
-
-    return (
-      labels[normalizeKey(key)] ||
-      String(key)
-        .replace(/([A-Z])/g, " $1")
-        .replace(/^./, (char) => char.toUpperCase())
-    );
-  };
-
-  // ============================================================
-  // FIND MATCHING VARIANT
-  // ============================================================
-
-  const selectedVariant = useMemo(() => {
-    if (!variants.length) return null;
-
-    // No selection yet
-    if (Object.keys(selectedAttributes).length === 0) {
-      return variants.find((variant) => Number(variant.stock || 0) > 0) ||
-        variants[0];
-    }
-
-    const match = variants.find((variant) => {
-      const attributes = getVariantAttributes(variant);
-
-      return Object.entries(selectedAttributes).every(
-        ([key, selectedValue]) =>
-          String(attributes[key] || "").toLowerCase() ===
-          String(selectedValue).toLowerCase()
       );
     });
 
-    return match || variants[0];
-  }, [variants, selectedAttributes]);
+    return data;
+  }, [product?.variants]);
 
-  // ============================================================
-  // CHANGE ATTRIBUTE
-  // ============================================================
+  /*
+  |--------------------------------------------------------------------------
+  | Attribute Label
+  |--------------------------------------------------------------------------
+  */
 
-  const handleAttributeChange = (key, value) => {
-    setSelectedAttributes((previous) => ({
-      ...previous,
+  const getAttributeLabel = (key) => {
+    if (!key) {
+      return "";
+    }
+
+    return String(key)
+      .replace(/([A-Z])/g, " $1")
+      .replace(/[_-]/g, " ")
+      .replace(/\b\w/g, (letter) =>
+        letter.toUpperCase()
+      )
+      .trim();
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Find Selected Variant
+  |--------------------------------------------------------------------------
+  */
+
+  const selectedVariant = useMemo(() => {
+    const variants =
+      Array.isArray(product?.variants)
+        ? product.variants
+        : [];
+
+    if (variants.length === 0) {
+      return null;
+    }
+
+    /*
+     * If no attributes selected,
+     * use first variant.
+     */
+    if (
+      Object.keys(selectedAttributes)
+        .length === 0
+    ) {
+      return variants[0];
+    }
+
+    /*
+     * Match selected attributes
+     */
+    const matchingVariant =
+      variants.find((variant) => {
+        const attributes =
+          getVariantAttributes(
+            variant
+          );
+
+        return Object.entries(
+          selectedAttributes
+        ).every(
+          ([selectedKey, selectedValue]) => {
+            const variantKey =
+              Object.keys(attributes).find(
+                (key) =>
+                  normalizeKey(key) ===
+                  normalizeKey(
+                    selectedKey
+                  )
+              );
+
+            if (!variantKey) {
+              return false;
+            }
+
+            return (
+              normalizeKey(
+                attributes[
+                  variantKey
+                ]
+              ) ===
+              normalizeKey(
+                selectedValue
+              )
+            );
+          }
+        );
+      });
+
+    return (
+      matchingVariant ||
+      variants[0]
+    );
+  }, [
+    product?.variants,
+    selectedAttributes,
+  ]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Handle Attribute Change
+  |--------------------------------------------------------------------------
+  */
+
+  const handleAttributeChange = (
+    key,
+    value
+  ) => {
+    setSelectedAttributes((prev) => ({
+      ...prev,
       [key]: value,
     }));
   };
 
-  // ============================================================
-  // PRICE
-  // ============================================================
+  /*
+  |--------------------------------------------------------------------------
+  | Display Variant
+  |--------------------------------------------------------------------------
+  */
 
-  const displayVariant = selectedVariant || variants[0] || null;
+  const displayVariant =
+    selectedVariant ||
+    (Array.isArray(product?.variants)
+      ? product.variants[0]
+      : null);
 
-  const productPrice = Number(product?.price || 0);
+  /*
+  |--------------------------------------------------------------------------
+  | Price
+  |--------------------------------------------------------------------------
+  */
 
-  const variantPrice = Number(displayVariant?.price || 0);
+  const displayPrice = Number(
+    displayVariant?.price ??
+      product?.discountPrice ??
+      product?.price ??
+      0
+  );
 
-  const productMrp = Number(product?.mrp || 0);
+  const displayMrp = Number(
+    displayVariant?.mrp ??
+      product?.mrp ??
+      product?.price ??
+      displayPrice
+  );
 
-  const variantMrp = Number(displayVariant?.mrp || 0);
+  /*
+  |--------------------------------------------------------------------------
+  | Stock
+  |--------------------------------------------------------------------------
+  */
 
-  const displayPrice =
-    variantPrice > 0 ? variantPrice : productPrice;
-
-  const displayMrp =
-    variantMrp > 0
-      ? variantMrp
-      : productMrp > 0
-      ? productMrp
-      : 0;
-
-  const hasDiscount =
-    displayMrp > displayPrice && displayPrice > 0;
-
-  const discountPercent = hasDiscount
-    ? Math.round(
-        ((displayMrp - displayPrice) / displayMrp) * 100
-      )
-    : 0;
-
-  // ============================================================
-  // STOCK
-  // ============================================================
-
-  const totalStock = variants.length
-    ? variants.reduce(
-        (total, variant) =>
-          total + Number(variant?.stock || 0),
-        0
-      )
-    : Number(product?.stock || 0);
-
-  const selectedStock = variants.length
-    ? Number(displayVariant?.stock || 0)
-    : Number(product?.stock || 0);
-
-  const isProductInactive =
-    product?.isActive === false ||
-    product?.status === "rejected" ||
-    product?.isDeleted === true;
+  const selectedStock = Number(
+    displayVariant?.stock ??
+      product?.stock ??
+      0
+  );
 
   const isOutOfStock =
-    isProductInactive ||
-    (variants.length
-      ? selectedStock <= 0
-      : totalStock <= 0);
+    selectedStock <= 0;
 
-  // ============================================================
-  // IMAGE
-  // ============================================================
+  const isLowStock =
+    selectedStock > 0 &&
+    selectedStock <= 5;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Discount
+  |--------------------------------------------------------------------------
+  */
+
+  const discountPercentage =
+    displayMrp > displayPrice
+      ? Math.round(
+          ((displayMrp -
+            displayPrice) /
+            displayMrp) *
+            100
+        )
+      : 0;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Display Image
+  |--------------------------------------------------------------------------
+  */
 
   const displayImage =
-    displayVariant?.image ||
     displayVariant?.images?.[0] ||
+    displayVariant?.image ||
     product?.thumbnail ||
     product?.images?.[0] ||
-    "https://via.placeholder.com/500x500?text=No+Image";
+    "/placeholder-product.png";
 
-  // ============================================================
-  // ADD TO CART
-  // ============================================================
+  /*
+  |--------------------------------------------------------------------------
+  | Build Cart Product
+  |--------------------------------------------------------------------------
+  */
 
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (isOutOfStock) return;
-
-    const cartProduct = {
+  const buildCartProduct = () => {
+    return {
       ...product,
 
-      // Selected variant
-      selectedVariant: displayVariant,
+      productId:
+        product?.productId ||
+        product?._id,
 
-      // Keep these convenient fields for CartContext
-      variantId: displayVariant?._id || null,
-      sku: displayVariant?.sku || product?.sku || null,
+      variantId:
+        displayVariant?._id ||
+        displayVariant?.sku ||
+        null,
 
-      price: displayPrice,
-      mrp: displayMrp,
+      sku:
+        displayVariant?.sku ||
+        product?.sku ||
+        null,
 
-      stock: selectedStock,
+      selectedVariant:
+        displayVariant || null,
 
       selectedAttributes: {
         ...selectedAttributes,
       },
 
-      image: displayImage,
-    };
+      price: displayPrice,
 
-    addToCart(cartProduct);
+      mrp: displayMrp,
+
+      stock: selectedStock,
+
+      image: displayImage,
+
+      thumbnail:
+        displayVariant?.images?.[0] ||
+        displayVariant?.image ||
+        product?.thumbnail ||
+        product?.images?.[0] ||
+        displayImage,
+    };
   };
 
-  // ============================================================
-  // ATTRIBUTE ORDER
-  // ============================================================
+  /*
+  |--------------------------------------------------------------------------
+  | Current Cart Item
+  |--------------------------------------------------------------------------
+  */
 
-  const orderedAttributes = Object.entries(attributeData).sort(
-    ([keyA], [keyB]) => {
-      const priority = {
-        color: 1,
-        size: 2,
-        ram: 3,
-        storage: 4,
-        capacity: 5,
-        weight: 6,
-      };
+  const currentCartItem =
+    useMemo(() => {
+      if (!product?._id) {
+        return null;
+      }
+
+      const currentVariantId =
+        displayVariant?._id ||
+        displayVariant?.sku ||
+        "default";
 
       return (
-        (priority[normalizeKey(keyA)] || 99) -
-        (priority[normalizeKey(keyB)] || 99)
-      );
-    }
-  );
+        cart.find((item) => {
+          const itemProductId =
+            item?._id;
 
-  // ============================================================
-  // RENDER
-  // ============================================================
+          const itemVariantId =
+            item?.variantId ||
+            item?.selectedVariant?._id ||
+            item?.selectedVariant?.sku ||
+            "default";
+
+          return (
+            String(itemProductId) ===
+              String(product._id) &&
+            String(itemVariantId) ===
+              String(currentVariantId)
+          );
+        }) || null
+      );
+    }, [
+      cart,
+      product?._id,
+      displayVariant?._id,
+      displayVariant?.sku,
+    ]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Current Quantity
+  |--------------------------------------------------------------------------
+  */
+
+  const currentQuantity =
+    Number(
+      currentCartItem?.quantity
+    ) || 0;
+
+  const isInCart =
+    !!currentCartItem &&
+    currentQuantity > 0;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Cart Item ID
+  |--------------------------------------------------------------------------
+  */
+
+  const currentCartItemId =
+    currentCartItem
+      ? getCartItemId(
+          currentCartItem
+        )
+      : null;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Added Notification
+  |--------------------------------------------------------------------------
+  */
+
+  const showAddedNotification =
+    () => {
+      setShowAddedAlert(true);
+
+      if (alertTimerRef.current) {
+        clearTimeout(
+          alertTimerRef.current
+        );
+      }
+
+      alertTimerRef.current =
+        setTimeout(() => {
+          setShowAddedAlert(false);
+        }, 1800);
+    };
+
+  useEffect(() => {
+    return () => {
+      if (alertTimerRef.current) {
+        clearTimeout(
+          alertTimerRef.current
+        );
+      }
+    };
+  }, []);
+
+  /*
+  |--------------------------------------------------------------------------
+  | ADD TO CART
+  |--------------------------------------------------------------------------
+  */
+
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isOutOfStock) {
+      return;
+    }
+
+    /*
+     * Already in cart.
+     *
+     * Don't navigate to cart.
+     * Quantity controls handle it.
+     */
+    if (isInCart) {
+      return;
+    }
+
+    const cartProduct =
+      buildCartProduct();
+
+    addToCart(cartProduct);
+
+    showAddedNotification();
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | PLUS
+  |--------------------------------------------------------------------------
+  */
+
+  const handleIncrease = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (
+      !currentCartItem ||
+      !currentCartItemId
+    ) {
+      return;
+    }
+
+    if (
+      currentQuantity >=
+      selectedStock
+    ) {
+      return;
+    }
+
+    updateQuantity(
+      currentCartItemId,
+      currentQuantity + 1
+    );
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | MINUS
+  |--------------------------------------------------------------------------
+  */
+
+  const handleDecrease = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (
+      !currentCartItem ||
+      !currentCartItemId
+    ) {
+      return;
+    }
+
+    updateQuantity(
+      currentCartItemId,
+      currentQuantity - 1
+    );
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Ordered Attributes
+  |--------------------------------------------------------------------------
+  */
+
+  const orderedAttributes =
+    Object.entries(
+      attributeData
+    );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Render
+  |--------------------------------------------------------------------------
+  */
 
   return (
-    <div className="group h-full flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-slate-300 transition-all duration-200">
+    <>
+      {/* ============================================================
+          CART ADDED NOTIFICATION
+      ============================================================ */}
 
-      {/* ======================================================
-          PRODUCT IMAGE
-      ======================================================= */}
-
-      <Link
-        to={`/${category}/product/${product?._id}`}
-        className="block"
-      >
-        <div className="relative w-full aspect-square bg-slate-50 overflow-hidden">
-
-          <img
-            src={displayImage}
-            alt={product?.name || "Product"}
-            className="w-full h-full object-contain p-3 group-hover:scale-[1.04] transition-transform duration-300"
-            loading="lazy"
-          />
-
-          {/* Discount */}
-
-          {hasDiscount && (
-            <div className="absolute top-2 left-2 bg-[#2874f0] text-white text-[10px] sm:text-[11px] font-bold px-2 py-1 rounded">
-              {discountPercent}% OFF
+      {showAddedAlert && (
+        <div className="fixed right-4 top-20 z-[10000] animate-[slideIn_.25s_ease-out]">
+          <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-xl ring-1 ring-black/10">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+              <Check
+                size={18}
+                className="text-green-600"
+                strokeWidth={3}
+              />
             </div>
-          )}
 
-          {/* Stock */}
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                Item added to cart
+              </p>
 
-          {isOutOfStock && (
-            <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
-              <span className="bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
-                Out of Stock
+              <p className="text-xs text-gray-500">
+                {product?.name ||
+                  "Product"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================
+          PRODUCT CARD
+      ============================================================ */}
+
+      <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+        <Link
+          to={`/${
+            product?.storeType ||
+            product?.categoryType ||
+            "grocery"
+          }/product/${
+            product?._id
+          }`}
+          onClick={(e) => {
+            /*
+             * Prevent accidental navigation
+             * when clicking variant/cart controls.
+             */
+          }}
+          className="block"
+        >
+          {/* ========================================================
+              IMAGE
+          ======================================================== */}
+
+          <div className="relative aspect-square overflow-hidden bg-gray-50">
+            <img
+              src={displayImage}
+              alt={
+                product?.name ||
+                "Product"
+              }
+              className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+              onError={(e) => {
+                e.currentTarget.src =
+                  "/placeholder-product.png";
+              }}
+            />
+
+            {/* Discount */}
+            {discountPercentage > 0 && (
+              <span className="absolute left-2 top-2 rounded-md bg-green-600 px-2 py-1 text-[11px] font-bold text-white">
+                {discountPercentage}% OFF
               </span>
-            </div>
-          )}
+            )}
 
-          {/* Low Stock */}
-
-          {!isOutOfStock &&
-            selectedStock > 0 &&
-            selectedStock <= 5 && (
-              <div className="absolute bottom-2 left-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded">
-                Only {selectedStock} left
+            {/* Out Of Stock */}
+            {isOutOfStock && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+                <span className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-bold text-white">
+                  OUT OF STOCK
+                </span>
               </div>
             )}
-        </div>
-      </Link>
+          </div>
 
-      {/* ======================================================
-          CONTENT
-      ======================================================= */}
+          {/* ========================================================
+              CONTENT
+          ======================================================== */}
 
-      <div className="flex flex-col flex-1 p-3">
+          <div className="p-3">
+            {/* Brand */}
+            {product?.brand && (
+              <p className="mb-1 truncate text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                {product.brand}
+              </p>
+            )}
 
-        {/* Brand */}
+            {/* Product Name */}
+            <h3 className="line-clamp-2 min-h-[40px] text-sm font-semibold leading-5 text-gray-800">
+              {product?.name ||
+                "Product"}
+            </h3>
 
-        <p className="text-[11px] text-slate-400 font-medium truncate mb-0.5">
-          {product?.brand || "\u00A0"}
-        </p>
+            {/* ======================================================
+                VARIANT SELECTORS
+            ====================================================== */}
 
-        {/* Product Name */}
+            {orderedAttributes.length >
+              0 && (
+              <div className="mt-3 space-y-2">
+                {orderedAttributes.map(
+                  ([attributeKey, data]) => (
+                    <div
+                      key={
+                        attributeKey
+                      }
+                    >
+                      <p className="mb-1 text-[11px] font-semibold text-gray-600">
+                        {getAttributeLabel(
+                          data.key
+                        )}
+                      </p>
 
-        <Link
-          to={`/${category}/product/${product?._id}`}
-        >
-          <h3 className="text-[13px] sm:text-[14px] font-medium text-slate-800 leading-snug line-clamp-2 min-h-[38px] hover:text-[#2874f0] transition-colors">
-            {product?.name}
-          </h3>
-        </Link>
-
-        {/* ==================================================
-            DYNAMIC VARIANTS
-        =================================================== */}
-
-        {orderedAttributes.length > 0 && (
-          <div className="mt-2 space-y-2">
-
-            {orderedAttributes.map(([key, values]) => {
-              const normalizedKey = normalizeKey(key);
-
-              return (
-                <div key={key}>
-
-                  {/* Attribute Title */}
-
-                  <div className="flex items-center gap-1 mb-1">
-
-                    <span className="text-[11px] font-semibold text-slate-600">
-                      {getAttributeLabel(key)}:
-                    </span>
-
-                    {selectedAttributes[key] && (
-                      <span className="text-[11px] text-slate-900 font-medium">
-                        {selectedAttributes[key]}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Options */}
-
-                  <div className="flex flex-wrap gap-1.5">
-
-                    {values.map((value) => {
-                      const isSelected =
-                        String(
-                          selectedAttributes[key] || ""
-                        ).toLowerCase() ===
-                        String(value).toLowerCase();
-
-                      // Check whether this combination exists
-                      const optionVariantExists = variants.some(
-                        (variant) => {
-                          const attrs =
-                            getVariantAttributes(variant);
-
-                          return (
-                            String(attrs[key] || "").toLowerCase() ===
-                              String(value).toLowerCase() &&
-                            Object.entries(selectedAttributes)
-                              .filter(
-                                ([selectedKey]) =>
-                                  selectedKey !== key
-                              )
-                              .every(
-                                ([selectedKey, selectedValue]) =>
-                                  String(
-                                    attrs[selectedKey] || ""
-                                  ).toLowerCase() ===
-                                  String(
-                                    selectedValue
-                                  ).toLowerCase()
-                              )
-                          );
-                        }
-                      );
-
-                      const optionDisabled =
-                        !optionVariantExists;
-
-                      // Color values
-                      const colorNames = [
-                        "black",
-                        "white",
-                        "red",
-                        "blue",
-                        "green",
-                        "yellow",
-                        "orange",
-                        "purple",
-                        "pink",
-                        "grey",
-                        "gray",
-                        "brown",
-                        "navy",
-                      ];
-
-                      const isColor =
-                        normalizedKey === "color" &&
-                        colorNames.includes(
-                          String(value).toLowerCase()
-                        );
-
-                      return (
-                        <button
-                          key={`${key}-${value}`}
-                          type="button"
-                          disabled={optionDisabled}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            if (!optionDisabled) {
-                              handleAttributeChange(
-                                key,
+                      <div className="flex flex-wrap gap-1.5">
+                        {data.values.map(
+                          (value) => {
+                            const isSelected =
+                              normalizeKey(
+                                selectedAttributes[
+                                  attributeKey
+                                ]
+                              ) ===
+                              normalizeKey(
                                 value
                               );
-                            }
-                          }}
-                          className={`
-                            relative
-                            transition-all
-                            duration-150
-                            ${
-                              isColor
-                                ? "w-7 h-7 rounded-full"
-                                : "min-w-[32px] px-2 h-7 rounded-md text-[11px]"
-                            }
-                            border
-                            ${
-                              isSelected
-                                ? "border-[#2874f0] ring-2 ring-[#2874f0]/20 bg-blue-50 text-[#2874f0] font-bold"
-                                : "border-slate-300 bg-white text-slate-700 hover:border-[#2874f0]"
-                            }
-                            ${
-                              optionDisabled
-                                ? "opacity-35 cursor-not-allowed line-through"
-                                : "cursor-pointer"
-                            }
-                          `}
-                          title={
-                            optionDisabled
-                              ? "Not available"
-                              : String(value)
+
+                            return (
+                              <button
+                                key={`${attributeKey}-${value}`}
+                                type="button"
+                                onClick={(
+                                  e
+                                ) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+
+                                  handleAttributeChange(
+                                    attributeKey,
+                                    value
+                                  );
+                                }}
+                                className={`rounded-md border px-2 py-1 text-[11px] font-medium transition ${
+                                  isSelected
+                                    ? "border-blue-600 bg-blue-50 text-blue-700"
+                                    : "border-gray-300 bg-white text-gray-700 hover:border-blue-400"
+                                }`}
+                              >
+                                {value}
+                              </button>
+                            );
                           }
-                        >
-                          {isColor ? (
-                            <span
-                              className="absolute inset-1 rounded-full border border-black/10"
-                              style={{
-                                backgroundColor:
-                                  String(value).toLowerCase(),
-                              }}
-                            />
-                          ) : (
-                            value
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ==================================================
-            UNIT
-        =================================================== */}
-
-        {product?.unit && (
-          <p className="text-[11px] text-slate-500 mt-2">
-            {product.unit}
-          </p>
-        )}
-
-        <div className="flex-1" />
-
-        {/* ==================================================
-            PRICE + STOCK
-        =================================================== */}
-
-        <div className="mt-3">
-
-          <div className="flex items-center gap-1.5 flex-wrap">
-
-            <span className="text-[16px] font-bold text-slate-900">
-              ₹{displayPrice.toLocaleString("en-IN")}
-            </span>
-
-            {hasDiscount && (
-              <span className="text-[12px] text-slate-400 line-through">
-                ₹{displayMrp.toLocaleString("en-IN")}
-              </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
             )}
+
+            {/* ======================================================
+                UNIT
+            ====================================================== */}
+
+            {(displayVariant?.unit ||
+              product?.unit) && (
+              <p className="mt-2 text-xs text-gray-500">
+                Unit:{" "}
+                <span className="font-medium text-gray-700">
+                  {displayVariant?.unit ||
+                    product?.unit}
+                </span>
+              </p>
+            )}
+
+            {/* ======================================================
+                PRICE
+            ====================================================== */}
+
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-lg font-bold text-gray-900">
+                ₹
+                {displayPrice.toLocaleString(
+                  "en-IN"
+                )}
+              </span>
+
+              {displayMrp >
+                displayPrice && (
+                <span className="text-xs text-gray-400 line-through">
+                  ₹
+                  {displayMrp.toLocaleString(
+                    "en-IN"
+                  )}
+                </span>
+              )}
+            </div>
+
+            {/* ======================================================
+                SKU
+            ====================================================== */}
+
+            {(
+              displayVariant?.sku ||
+              product?.sku
+            ) && (
+              <p className="mt-1 truncate text-[10px] text-gray-400">
+                SKU:{" "}
+                {displayVariant?.sku ||
+                  product?.sku}
+              </p>
+            )}
+
+            {/* ======================================================
+                STOCK
+            ====================================================== */}
+
+            {isLowStock && (
+              <p className="mt-1 text-[11px] font-semibold text-orange-600">
+                Only{" "}
+                {selectedStock} left
+              </p>
+            )}
+
+            {/* ======================================================
+                CART ACTION
+            ====================================================== */}
+
+            <div className="mt-3">
+              {!isInCart ? (
+                <button
+                  type="button"
+                  onClick={
+                    handleAddToCart
+                  }
+                  disabled={
+                    isOutOfStock
+                  }
+                  className={`flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold transition ${
+                    isOutOfStock
+                      ? "cursor-not-allowed bg-gray-200 text-gray-500"
+                      : "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98]"
+                  }`}
+                >
+                  <ShoppingCart
+                    size={17}
+                  />
+
+                  {isOutOfStock
+                    ? "OUT OF STOCK"
+                    : "ADD TO CART"}
+                </button>
+              ) : (
+                <div
+                  className="flex h-[42px] w-full items-center justify-between overflow-hidden rounded-lg border border-blue-600 bg-white"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  {/* Minus */}
+                  <button
+                    type="button"
+                    onClick={
+                      handleDecrease
+                    }
+                    className="flex h-full w-12 items-center justify-center bg-blue-600 text-white transition hover:bg-blue-700 active:scale-95"
+                    aria-label="Decrease quantity"
+                  >
+                    <Minus
+                      size={17}
+                      strokeWidth={2.5}
+                    />
+                  </button>
+
+                  {/* Quantity */}
+                  <div className="flex flex-1 items-center justify-center gap-1 text-sm font-bold text-gray-900">
+                    <span>
+                      {currentQuantity}
+                    </span>
+                  </div>
+
+                  {/* Plus */}
+                  <button
+                    type="button"
+                    onClick={
+                      handleIncrease
+                    }
+                    disabled={
+                      currentQuantity >=
+                      selectedStock
+                    }
+                    className={`flex h-full w-12 items-center justify-center text-white transition active:scale-95 ${
+                      currentQuantity >=
+                      selectedStock
+                        ? "cursor-not-allowed bg-gray-400"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    }`}
+                    aria-label="Increase quantity"
+                  >
+                    <Plus
+                      size={17}
+                      strokeWidth={2.5}
+                    />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-
-          {/* Selected Variant SKU */}
-
-          {displayVariant?.sku && (
-            <p className="text-[9px] text-slate-400 mt-0.5 truncate">
-              SKU: {displayVariant.sku}
-            </p>
-          )}
-
-          {/* Selected Stock */}
-
-          {!isOutOfStock && variants.length > 0 && (
-            <p className="text-[10px] text-emerald-600 font-medium mt-0.5">
-              {selectedStock} available
-            </p>
-          )}
-        </div>
-
-        {/* ==================================================
-            ADD BUTTON
-        =================================================== */}
-
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          disabled={isOutOfStock}
-          className={`
-            w-full
-            mt-2.5
-            h-9
-            rounded-lg
-            text-[13px]
-            font-bold
-            transition-all
-            active:scale-[0.98]
-            ${
-              isOutOfStock
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                : "bg-white text-[#2874f0] border border-[#2874f0] hover:bg-[#2874f0] hover:text-white"
-            }
-          `}
-        >
-          {isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}
-        </button>
+        </Link>
       </div>
-    </div>
+    </>
   );
 }
