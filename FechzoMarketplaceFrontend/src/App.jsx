@@ -114,7 +114,7 @@ export default function App() {
 path="/wishlist"element={<Wishlist />}/>
           {/* Optional: 404 */}
           {/* <Route path="*" element={<NotFound />} /> */}
-          <Route path="/order" element={<OrderPage />} />
+          <Route path="/orders" element={<OrderPage />} />
           <Route path="/search" element={<SearchPage />} />
         </Routes>
       </main>

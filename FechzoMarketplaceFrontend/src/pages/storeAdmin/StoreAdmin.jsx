@@ -15,7 +15,7 @@ import {
   UserRound,
 } from "lucide-react";
 import StoreProducts from "./StoreProducts";
-
+import AdminOrders from "./Order/AdminOrders";
 
 import StoreDashboard from "./StoreDashboard";
 import StoreSettings from "./StoreSettings";
@@ -271,49 +271,9 @@ export default function StoreAdmin() {
      * ORDERS
      */
 
-    if (activePage === "orders") {
-      return (
-        <div className="p-4 sm:p-6 lg:p-8">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 rounded-xl bg-green-50 flex items-center justify-center">
-                <ShoppingBag
-                  size={22}
-                  className="text-green-600"
-                />
-              </div>
-
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Orders
-                </h1>
-
-                <p className="text-sm text-gray-500">
-                  Manage customer orders
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 rounded-xl border border-dashed border-gray-300 p-10 text-center">
-              <ShoppingBag
-                size={40}
-                className="mx-auto text-gray-300"
-              />
-
-              <h2 className="mt-4 font-semibold text-gray-700">
-                Orders Management
-              </h2>
-
-              <p className="text-sm text-gray-500 mt-1">
-                Order management will be available here.
-              </p>
-            </div>
-
-          </div>
-        </div>
-      );
-    }
+   if (activePage === "orders") {
+  return <AdminOrders />;
+}
 
     /*
      * CATEGORIES
