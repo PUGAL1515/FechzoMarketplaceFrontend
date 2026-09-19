@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   MapPin,
-  Phone,
   Package,
   CreditCard,
   ShieldCheck,
@@ -18,7 +17,7 @@ import api from "../../api";
 export default function OrderPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cart, clearCart } = useCart(); // make sure clearCart exists in your CartContext
+  const { cart, clearCart } = useCart();
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,6 +74,7 @@ export default function OrderPage() {
   }, [navigate]);
 
   // ---------- ORDER ITEMS ----------
+  // Supports: single product (Buy Now) OR multiple products from same store (Cart)
   const orderItems = useMemo(() => {
     if (location.state?.product) {
       const product = location.state.product;
@@ -136,6 +136,19 @@ export default function OrderPage() {
       return item.selectedAttributes;
     }
     return {};
+  };
+
+  // Normalize storeId to string (fixes ObjectId vs string mismatch)
+ const getStoreId = (item) => {
+  let id = item?.storeId || item?.store?._id || item?.store;
+  if (id && typeof id === "object") {
+    id = id._id || id.id;
+  }
+  return id ? String(id) : null;
+};
+
+  const getStoreType = (item) => {
+    return item?.storeType || item?.store?.storeType || null;
   };
 
   const subtotal = orderItems.reduce((total, item) => {
@@ -221,29 +234,40 @@ export default function OrderPage() {
       return;
     }
 
-    // Get store info from first item
-    const firstItem = orderItems[0];
-    const storeId = firstItem.storeId || firstItem.store?._id;
-    const storeType = firstItem.storeType;
+    // Normalize all storeIds to string
+    const storeIds = orderItems.map(getStoreId);
+    const firstStoreId = storeIds[0];
+    const firstStoreType = getStoreType(orderItems[0]);
 
-    if (!storeId || !storeType) {
-      alert("Store information missing in product. Cannot place order.");
+    // Debug (check browser console)
+    console.log("Order items storeIds:", storeIds);
+    console.log("Order items:", orderItems);
+
+    if (!firstStoreId || !firstStoreType) {
+      alert(
+        "Store information missing in product(s). Please clear cart and add products again."
+      );
       return;
     }
 
-    // Check all items belong to same store
-    const differentStore = orderItems.some(
-      (item) => (item.storeId || item.store?._id) !== storeId
+    // Block ONLY if different stores (multiple products from SAME store is allowed)
+    const hasDifferentStore = storeIds.some(
+      (id) => !id || id !== firstStoreId
     );
     if (differentStore) {
       alert("All items must be from the same store. Please order separately.");
       return;
     }
 
+    if (hasDifferentStore) {
+      alert("All items must be from the same store. Please order separately.");
+      return;
+    }
+
     const payload = {
       userId: user._id,
-      storeId,
-      storeType, // "fashion" | "electronics" | "grocery"
+      storeId: firstStoreId,
+      storeType: firstStoreType,
       items: orderItems.map((item) => {
         const variant = getVariant(item);
         return {
@@ -264,7 +288,7 @@ export default function OrderPage() {
         name: selectedAddress.name || user?.name || "",
         phone: selectedAddress.phone || user?.phone || "",
       },
-      paymentMethod, // "COD"
+      paymentMethod,
       customerNote: "",
     };
 
@@ -273,22 +297,15 @@ export default function OrderPage() {
     try {
       const res = await api.post("/marketplace/orders", payload);
 
-      // Clear cart if order came from cart
+      // Clear cart only if order came from cart
       if (!location.state?.product && typeof clearCart === "function") {
         clearCart();
       }
 
-      // Navigate to success page (create one later)
       navigate("/order-success", {
-        state: {
-          order: res.data.order,
-        },
+        state: { order: res.data.order },
         replace: true,
       });
-
-      // Or simple success for now:
-      // alert("Order placed successfully! Order ID: " + res.data.order.orderId);
-      // navigate("/");
     } catch (err) {
       console.error("Place order error:", err);
       alert(

@@ -26,6 +26,7 @@ import AdForm from "./pages/storeAdmin/AdForm";
  // Single product page
 import Wishlist from "../src/components/common/WishlistPage";      // Wishlist page
 import OrderPage from "./pages/orders/OrderPage";
+import OrderSuccess from "../src/components/common/OrderSuccess"; // Order success page
 import OrderHistory from "./pages/orders/components/OrderHistory";
 export default function App() {
   // ============================================================
@@ -110,6 +111,7 @@ path="/wishlist"element={<Wishlist />}/>
           <Route path="/orders" element={<OrderHistory />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/order-success" element={<OrderSuccess />} />
         </Routes>
       </main>
     </BrowserRouter>
