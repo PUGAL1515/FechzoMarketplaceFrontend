@@ -4,37 +4,30 @@ import {
   Routes,
   Route,
 } from "react-router-dom";
-
 import Header from "./components/common/Header";
 import CartPage from "./components/common/CartPage";
-
 import MarketplaceHome from "./marketplace/MarketplaceHome";
-
 // Category pages
 import GroceryHome from "./components/grocery/GroceryHome";
 import GroceryProducts from "./components/grocery/GroceryProducts";
-
 import FashionHome from "./components/fashion/FashionHome";
 import FashionProducts from "./components/fashion/FashionProducts";
-
 import ElectronicsHome from "./components/electronics/ElectronicsHome";
 import ElectronicsProducts from "./components/electronics/ElectronicsProducts";
-
 // Store related
 import StoreRegisterForm from "./pages/store/StoreRegisterForm";
 import SearchPage from "./pages/home/Searchpage";
 import StoreAdmin from "./pages/storeAdmin/StoreAdmin";
 import StoreLogin from "./pages/storeAdmin/StoreLogin";
-
 import StorePage from "./components/common/StorePage";
 import ProductDetail from "./components/common/ProductDetail";
 import StoreAds from "./pages/storeAdmin/StoreAds";
 import AdForm from "./pages/storeAdmin/AdForm";
-
  // Single product page
 import Wishlist from "../src/components/common/WishlistPage";      // Wishlist page
 import OrderPage from "./pages/orders/OrderPage";
 import OrderSuccess from "../src/components/common/OrderSuccess"; // Order success page
+import OrderHistory from "./pages/orders/components/OrderHistory";
 export default function App() {
   // ============================================================
   // LOGIN TRANSFER FROM FECHZO FOOD (5173)
@@ -115,7 +108,8 @@ export default function App() {
 path="/wishlist"element={<Wishlist />}/>
           {/* Optional: 404 */}
           {/* <Route path="*" element={<NotFound />} /> */}
-          <Route path="/orders" element={<OrderPage />} />
+          <Route path="/orders" element={<OrderHistory />} />
+          <Route path="/order" element={<OrderPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/order-success" element={<OrderSuccess />} />
         </Routes>
