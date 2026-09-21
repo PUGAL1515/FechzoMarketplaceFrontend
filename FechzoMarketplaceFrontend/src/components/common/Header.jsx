@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import {
-  Search,
   MapPin,
   User,
   ChevronDown,
@@ -22,6 +21,7 @@ import {
 import { useCart } from "../../context/CartContext";
 import SignInModal from "./SignInModal";
 import SearchBar from "./SearchBar";
+import api from "../../api/api";
 
 export default function Header() {
   const location = useLocation();
@@ -34,10 +34,18 @@ export default function Header() {
   // ============================================================
 
   const [user, setUser] = useState(null);
+  const [userAddress, setUserAddress] = useState(null);
+
+  const [loadingAddress, setLoadingAddress] = useState(false);
+
   const [showProfile, setShowProfile] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // ============================================================
+  // CURRENT CATEGORY
+  // ============================================================
 
   const currentCategory = location.pathname.split("/")[1];
 
@@ -62,6 +70,11 @@ export default function Header() {
       icon: Smartphone,
     },
   ];
+
+  // ============================================================
+  // LOAD USER
+  // ============================================================
+
   const loadUser = () => {
     try {
       const token =
@@ -72,28 +85,98 @@ export default function Header() {
       const storedUser = localStorage.getItem("userProfile");
 
       if (token && storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+
+        setUser(parsedUser);
+
+        return parsedUser;
       } else {
         setUser(null);
+        setUserAddress(null);
+
+        return null;
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
+
       setUser(null);
+      setUserAddress(null);
+
+      return null;
     }
   };
 
+  // ============================================================
+  // LOAD USER ADDRESS
+  // ============================================================
+
+  const loadUserAddress = async (userData) => {
+    try {
+      if (!userData?._id) {
+        setUserAddress(null);
+        return;
+      }
+
+      setLoadingAddress(true);
+
+      const res = await api.get(`/users/${userData._id}`);
+
+      const addresses = res.data?.addresses || [];
+
+      if (addresses.length > 0) {
+        // Use the first saved address
+        setUserAddress(addresses[0]);
+      } else {
+        setUserAddress(null);
+      }
+    } catch (error) {
+      console.error("Error loading user address:", error);
+      setUserAddress(null);
+    } finally {
+      setLoadingAddress(false);
+    }
+  };
+
+  // ============================================================
+  // INITIAL USER + ADDRESS LOAD
+  // ============================================================
+
   useEffect(() => {
-    loadUser();
+    const initHeader = async () => {
+      try {
+        const token =
+          localStorage.getItem("authToken") ||
+          localStorage.getItem("jwt_token") ||
+          localStorage.getItem("token");
 
-    window.addEventListener("storage", loadUser);
-    window.addEventListener("auth-changed", loadUser);
+        const storedUser = localStorage.getItem("userProfile");
 
-    const timer = setTimeout(loadUser, 300);
+        if (token && storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+
+          setUser(parsedUser);
+
+          await loadUserAddress(parsedUser);
+        } else {
+          setUser(null);
+          setUserAddress(null);
+        }
+      } catch (error) {
+        console.error("Error initializing header:", error);
+
+        setUser(null);
+        setUserAddress(null);
+      }
+    };
+
+    initHeader();
+
+    window.addEventListener("storage", initHeader);
+    window.addEventListener("auth-changed", initHeader);
 
     return () => {
-      window.removeEventListener("storage", loadUser);
-      window.removeEventListener("auth-changed", loadUser);
-      clearTimeout(timer);
+      window.removeEventListener("storage", initHeader);
+      window.removeEventListener("auth-changed", initHeader);
     };
   }, []);
 
@@ -139,7 +222,9 @@ export default function Header() {
     localStorage.removeItem("userProfile");
 
     setUser(null);
+    setUserAddress(null);
     setShowProfile(false);
+    setShowLocation(false);
 
     window.dispatchEvent(new Event("auth-changed"));
 
@@ -181,7 +266,28 @@ export default function Header() {
     user?.avatar ||
     null;
 
- 
+  // ============================================================
+  // LOCATION DISPLAY
+  // ============================================================
+
+  const getLocationText = () => {
+    if (loadingAddress) {
+      return "Loading...";
+    }
+
+    if (!userAddress) {
+      return "Select location";
+    }
+
+    const city = userAddress.city || "";
+    const pincode = userAddress.pincode || "";
+
+    if (city && pincode) {
+      return `${city} - ${pincode}`;
+    }
+
+    return city || pincode || "Select location";
+  };
 
   // ============================================================
   // ACTIVE CATEGORY
@@ -205,7 +311,18 @@ export default function Header() {
           HEADER
       ======================================================== */}
 
-      <header className="sticky top-0 z-[100] bg-white border-b border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+      <header
+        className="
+          relative
+          sticky
+          top-0
+          z-[100]
+          bg-white
+          border-b
+          border-gray-200
+          shadow-[0_2px_8px_rgba(0,0,0,0.08)]
+        "
+      >
 
         {/* ======================================================
             TOP HEADER
@@ -226,9 +343,10 @@ export default function Header() {
                 className="flex items-center shrink-0 group"
                 aria-label="Fechzo Home"
               >
+
                 <div className="flex items-center gap-2">
 
-                  {/* Logo Icon */}
+                  {/* LOGO ICON */}
 
                   <div
                     className="
@@ -244,6 +362,7 @@ export default function Header() {
                       shadow-md
                       group-hover:scale-105
                       transition-transform
+                      duration-200
                     "
                   >
                     <span
@@ -258,7 +377,7 @@ export default function Header() {
                     </span>
                   </div>
 
-                  {/* Logo Text */}
+                  {/* LOGO TEXT */}
 
                   <div className="leading-none">
 
@@ -289,9 +408,14 @@ export default function Header() {
                   </div>
 
                 </div>
+
               </Link>
 
-             <SearchBar />
+              {/* ==================================================
+                  SEARCH
+              ================================================== */}
+
+              <SearchBar />
 
               {/* ==================================================
                   LOCATION
@@ -343,26 +467,36 @@ export default function Header() {
                         flex
                         items-center
                         gap-1
-                        whitespace-nowrap
+                        max-w-[180px]
                       "
                     >
-                      Select location
+
+                      <span className="truncate">
+                        {getLocationText()}
+                      </span>
 
                       <ChevronDown
                         size={14}
-                        className={
-                          showLocation
-                            ? "rotate-180"
-                            : ""
-                        }
+                        className={`
+                          shrink-0
+                          transition-transform
+                          ${
+                            showLocation
+                              ? "rotate-180"
+                              : ""
+                          }
+                        `}
                       />
+
                     </div>
 
                   </div>
 
                 </button>
 
-                {/* LOCATION DROPDOWN */}
+                {/* ==================================================
+                    LOCATION DROPDOWN
+                ================================================== */}
 
                 {showLocation && (
                   <div
@@ -370,7 +504,7 @@ export default function Header() {
                       absolute
                       right-0
                       top-[52px]
-                      w-[300px]
+                      w-[320px]
                       bg-white
                       border
                       border-gray-200
@@ -378,8 +512,11 @@ export default function Header() {
                       shadow-2xl
                       p-4
                       z-[200]
+                      animate-[fadeIn_0.2s_ease-out]
                     "
                   >
+
+                    {/* TITLE */}
 
                     <div className="flex items-center gap-3 mb-4">
 
@@ -407,22 +544,125 @@ export default function Header() {
                         </div>
 
                         <div className="text-xs text-gray-500">
-                          Choose your delivery location
+                          Your saved delivery address
                         </div>
 
                       </div>
 
                     </div>
 
+                    {/* SAVED ADDRESS */}
+
+                    {userAddress ? (
+
+                      <div
+                        className="
+                          border
+                          border-blue-100
+                          bg-blue-50
+                          rounded-lg
+                          p-3
+                        "
+                      >
+
+                        <div className="flex items-start gap-2">
+
+                          <MapPin
+                            size={17}
+                            className="
+                              text-blue-600
+                              mt-0.5
+                              shrink-0
+                            "
+                          />
+
+                          <div
+                            className="
+                              text-sm
+                              text-gray-700
+                              min-w-0
+                            "
+                          >
+
+                            <p className="font-semibold text-gray-900">
+                              {userAddress.doorNo || ""}
+                              {userAddress.street
+                                ? `, ${userAddress.street}`
+                                : ""}
+                            </p>
+
+                            {userAddress.landmark && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {userAddress.landmark}
+                              </p>
+                            )}
+
+                            <p className="text-xs text-gray-600 mt-1">
+                              {userAddress.city || ""}
+                              {userAddress.state
+                                ? `, ${userAddress.state}`
+                                : ""}
+                            </p>
+
+                            {userAddress.pincode && (
+                              <p className="text-xs font-semibold text-gray-700 mt-1">
+                                PIN - {userAddress.pincode}
+                              </p>
+                            )}
+
+                            {userAddress.phone && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Phone: {userAddress.phone}
+                              </p>
+                            )}
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    ) : (
+
+                      <div className="text-center py-4">
+
+                        <MapPin
+                          size={28}
+                          className="
+                            mx-auto
+                            text-gray-400
+                            mb-2
+                          "
+                        />
+
+                        <p className="text-sm font-semibold text-gray-700">
+                          No delivery address
+                        </p>
+
+                        <p className="text-xs text-gray-500 mt-1">
+                          Add an address to start shopping
+                        </p>
+
+                      </div>
+
+                    )}
+
+                    {/* MANAGE ADDRESS */}
+
                     <button
                       type="button"
+                      onClick={() => {
+                        setShowLocation(false);
+                        navigate("/addresses");
+                      }}
                       className="
                         w-full
+                        mt-3
                         flex
                         items-center
                         justify-center
                         gap-2
-                        py-3
+                        py-2.5
                         px-4
                         rounded-lg
                         bg-blue-50
@@ -435,9 +675,8 @@ export default function Header() {
                         font-semibold
                       "
                     >
-                      <MapPinned size={18} />
-
-                      Select delivery location
+                      <MapPinned size={17} />
+                      Manage Addresses
                     </button>
 
                   </div>
@@ -454,6 +693,7 @@ export default function Header() {
                 {user ? (
 
                   <>
+
                     {/* LOGGED USER */}
 
                     <button
@@ -553,6 +793,7 @@ export default function Header() {
                     ================================================== */}
 
                     {showProfile && (
+
                       <div
                         className="
                           absolute
@@ -687,7 +928,6 @@ export default function Header() {
                             "
                           >
                             <UserRound size={18} />
-
                             My Profile
                           </Link>
 
@@ -710,7 +950,6 @@ export default function Header() {
                             "
                           >
                             <Package size={18} />
-
                             My Orders
                           </Link>
 
@@ -733,7 +972,6 @@ export default function Header() {
                             "
                           >
                             <MapPinned size={18} />
-
                             Addresses
                           </Link>
 
@@ -767,13 +1005,13 @@ export default function Header() {
                             "
                           >
                             <LogOut size={18} />
-
                             Logout
                           </button>
 
                         </div>
 
                       </div>
+
                     )}
 
                   </>
@@ -947,137 +1185,243 @@ export default function Header() {
                 MOBILE SEARCH
             ==================================================== */}
 
-         <SearchBar mobile />
+            <SearchBar mobile />
 
           </div>
+
         </div>
 
+
         {/* ==========================================================
-            CATEGORY BAR
+            DESKTOP FLOATING CATEGORY NAVIGATION
         ========================================================== */}
 
         <div
           className="
-            border-t
-            border-gray-100
-            bg-white
+            hidden
+            md:block
+            absolute
+            left-1/2
+            -translate-x-1/2
+            top-full
+            z-[150]
           "
         >
 
-          <div className="max-w-[1500px] mx-auto px-4 lg:px-8">
+          <div className="group">
+
+            {/* ====================================================
+                CATEGORY TRIGGER
+            ==================================================== */}
 
             <div
               className="
                 flex
                 items-center
                 justify-center
-                md:justify-start
-                gap-4
-                sm:gap-8
-                overflow-x-auto
-                scrollbar-hide
+                gap-2
+                px-5
+                py-1.5
+                bg-white
+                border
+                border-gray-200
+                border-t-0
+                rounded-b-xl
+                shadow-sm
+                cursor-pointer
+                transition-all
+                duration-300
+                group-hover:shadow-md
+                group-hover:px-6
               "
             >
 
-              {navItems.map((item) => {
+              {/* SMALL PULSE INDICATOR */}
 
-                const active = isActiveCategory(item);
+              <span
+                className="
+                  w-1.5
+                  h-1.5
+                  rounded-full
+                  bg-[#1e3a8a]
+                  animate-pulse
+                "
+              />
 
-                const Icon = item.icon;
+              <span
+                className="
+                  text-[11px]
+                  font-semibold
+                  text-gray-500
+                  uppercase
+                  tracking-wider
+                "
+              >
+                Categories
+              </span>
 
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.path}
-                    className={`
-                      relative
-                      flex
-                      flex-col
-                      items-center
-                      justify-center
-                      min-w-[90px]
-                      sm:min-w-[105px]
-                      py-3
-                      gap-1.5
-                      text-center
-                      whitespace-nowrap
-                      transition-all
-                      group
-                      ${
-                        active
-                          ? "text-[#1e3a8a]"
-                          : "text-gray-700 hover:text-[#1e3a8a]"
-                      }
-                    `}
-                  >
+              <ChevronDown
+                size={13}
+                className="
+                  text-gray-500
+                  transition-transform
+                  duration-300
+                  group-hover:rotate-180
+                "
+              />
 
-                    {/* CATEGORY ICON */}
+            </div>
 
-                    <div
+
+            {/* ====================================================
+                CATEGORY HOVER PANEL
+            ==================================================== */}
+
+            <div
+              className="
+                absolute
+                left-1/2
+                -translate-x-1/2
+                top-full
+                pt-2
+
+                opacity-0
+                invisible
+                translate-y-[-8px]
+                scale-95
+
+                group-hover:opacity-100
+                group-hover:visible
+                group-hover:translate-y-0
+                group-hover:scale-100
+
+                transition-all
+                duration-300
+                ease-out
+              "
+            >
+
+              <div
+                className="
+                  bg-white
+                  border
+                  border-gray-200
+                  rounded-2xl
+                  shadow-2xl
+                  p-2
+                  flex
+                  items-center
+                  gap-2
+                  min-w-max
+                "
+              >
+
+                {navItems.map((item) => {
+
+                  const active = isActiveCategory(item);
+                  const Icon = item.icon;
+
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.path}
                       className={`
-                        w-11
-                        h-11
-                        rounded-full
+                        relative
                         flex
                         items-center
-                        justify-center
+                        gap-2.5
+                        px-4
+                        py-2.5
+                        rounded-xl
+                        whitespace-nowrap
+
                         transition-all
+                        duration-200
+
+                        hover:-translate-y-0.5
+                        hover:shadow-sm
+
                         ${
                           active
-                            ? "bg-blue-50"
-                            : "bg-gray-50 group-hover:bg-blue-50"
+                            ? "bg-blue-50 text-[#1e3a8a]"
+                            : "text-gray-700 hover:bg-gray-50 hover:text-[#1e3a8a]"
                         }
                       `}
                     >
 
-                      <Icon
-                        size={27}
-                        strokeWidth={1.8}
-                      />
+                      {/* CATEGORY ICON */}
 
-                    </div>
+                      <div
+                        className={`
+                          w-8
+                          h-8
+                          rounded-lg
+                          flex
+                          items-center
+                          justify-center
+                          transition-all
+                          duration-200
 
-                    {/* CATEGORY NAME */}
+                          ${
+                            active
+                              ? "bg-white shadow-sm"
+                              : "bg-gray-100 group-hover:bg-blue-50"
+                          }
+                        `}
+                      >
 
-                    <span
-                      className={`
-                        text-[13px]
-                        sm:text-sm
-                        ${
-                          active
-                            ? "font-bold"
-                            : "font-medium"
-                        }
-                      `}
-                    >
-                      {item.name}
-                    </span>
+                        <Icon
+                          size={19}
+                          strokeWidth={1.8}
+                        />
 
-                    {/* ACTIVE LINE */}
+                      </div>
 
-                    {active && (
+
+                      {/* CATEGORY NAME */}
+
                       <span
-                        className="
-                          absolute
-                          bottom-0
-                          left-2
-                          right-2
-                          h-[3px]
-                          bg-[#1e3a8a]
-                          rounded-t-full
-                        "
-                      />
-                    )}
+                        className={`
+                          text-sm
+                          ${
+                            active
+                              ? "font-bold"
+                              : "font-medium"
+                          }
+                        `}
+                      >
+                        {item.name}
+                      </span>
 
-                  </Link>
-                );
-              })}
+
+                      {/* ACTIVE INDICATOR */}
+
+                      {active && (
+                        <span
+                          className="
+                            absolute
+                            top-1.5
+                            right-1.5
+                            w-1.5
+                            h-1.5
+                            rounded-full
+                            bg-[#1e3a8a]
+                          "
+                        />
+                      )}
+
+                    </Link>
+                  );
+                })}
+
+              </div>
 
             </div>
 
           </div>
 
         </div>
+
 
         {/* ==========================================================
             MOBILE MENU
@@ -1096,12 +1440,15 @@ export default function Header() {
 
             <div className="p-4">
 
+              {/* ==================================================
+                  MOBILE CATEGORIES
+              ================================================== */}
+
               <div className="grid grid-cols-3 gap-3">
 
                 {navItems.map((item) => {
 
                   const Icon = item.icon;
-
                   const active = isActiveCategory(item);
 
                   return (
@@ -1119,10 +1466,14 @@ export default function Header() {
                         gap-2
                         p-3
                         rounded-xl
+
+                        transition-all
+                        duration-200
+
                         ${
                           active
                             ? "bg-blue-50 text-blue-700"
-                            : "bg-gray-50 text-gray-700"
+                            : "bg-gray-50 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                         }
                       `}
                     >
@@ -1142,7 +1493,10 @@ export default function Header() {
 
               </div>
 
-              {/* MOBILE LOCATION */}
+
+              {/* ==================================================
+                  MOBILE LOCATION
+              ================================================== */}
 
               <div
                 className="
@@ -1175,25 +1529,136 @@ export default function Header() {
                     size={20}
                     className="text-gray-700"
                   />
-                  <div>
+
+                  <div className="min-w-0">
+
                     <div className="text-xs text-gray-500">
                       Deliver to
                     </div>
-                    <div className="text-sm font-semibold">
-                      Select delivery location
+
+                    <div className="text-sm font-semibold truncate">
+                      {getLocationText()}
                     </div>
+
                   </div>
+
                 </button>
+
+
+                {/* ==================================================
+                    MOBILE LOCATION DETAILS
+                ================================================== */}
+
+                {showLocation && (
+                  <div
+                    className="
+                      mt-3
+                      border
+                      border-gray-200
+                      rounded-xl
+                      p-3
+                    "
+                  >
+
+                    {userAddress ? (
+
+                      <div
+                        className="
+                          bg-blue-50
+                          border
+                          border-blue-100
+                          rounded-lg
+                          p-3
+                        "
+                      >
+                        <div className="flex items-start gap-2">
+                          <MapPin
+                            size={17}
+                            className="
+                              text-blue-600
+                              mt-0.5
+                              shrink-0
+                            "
+                          />
+                          <div
+                            className="
+                              text-sm
+                              text-gray-700
+                              min-w-0
+                            "
+                          >
+                            <p className="font-semibold text-gray-900">
+                              {userAddress.doorNo || ""}
+                              {userAddress.street
+                                ? `, ${userAddress.street}`
+                                : ""}
+                            </p>
+                            {userAddress.landmark && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {userAddress.landmark}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-600 mt-1">
+                              {userAddress.city || ""}
+                              {userAddress.state
+                                ? `, ${userAddress.state}`
+                                : ""}
+                            </p>
+                            {userAddress.pincode && (
+                              <p className="text-xs font-semibold text-gray-700 mt-1">
+                                PIN - {userAddress.pincode}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-3">
+                        <p className="text-sm font-semibold text-gray-700">
+                          No delivery address
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Add an address to start shopping
+                        </p>
+                      </div>
+                    )}
+                    {/* MANAGE ADDRESS */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLocation(false);
+                        setShowMobileMenu(false);
+                        navigate("/addresses");
+                      }}
+                      className="
+                        w-full
+                        mt-3
+                        flex
+                        items-center
+                        justify-center
+                        gap-2
+                        py-2.5
+                        rounded-lg
+                        bg-blue-50
+                        text-blue-700
+                        border
+                        border-blue-100
+                        text-sm
+                        font-semibold
+                        hover:bg-blue-100
+                        transition
+                      "
+                    >
+                      <MapPinned size={17} />
+                      Manage Addresses
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
       </header>
-
-      {/* ==========================================================
-          SIGN IN MODAL
-      ========================================================== */}
-
       {showSignIn && (
         <SignInModal
           toggleModal={() => setShowSignIn(false)}
