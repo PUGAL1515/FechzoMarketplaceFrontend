@@ -3,10 +3,13 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  useLocation,
 } from "react-router-dom";
+
 import Header from "./components/common/Header";
 import CartPage from "./components/common/CartPage";
 import MarketplaceHome from "./marketplace/MarketplaceHome";
+
 // Category pages
 import GroceryHome from "./components/grocery/GroceryHome";
 import GroceryProducts from "./components/grocery/GroceryProducts";
@@ -14,6 +17,7 @@ import FashionHome from "./components/fashion/FashionHome";
 import FashionProducts from "./components/fashion/FashionProducts";
 import ElectronicsHome from "./components/electronics/ElectronicsHome";
 import ElectronicsProducts from "./components/electronics/ElectronicsProducts";
+
 // Store related
 import StoreRegisterForm from "./pages/store/StoreRegisterForm";
 import SearchPage from "./pages/home/Searchpage";
@@ -23,51 +27,24 @@ import StorePage from "./components/common/StorePage";
 import ProductDetail from "./components/common/ProductDetail";
 import StoreAds from "./pages/storeAdmin/StoreAds";
 import AdForm from "./pages/storeAdmin/AdForm";
- // Single product page
-import Wishlist from "../src/components/common/WishlistPage";      // Wishlist page
+import Wishlist from "./components/common/WishlistPage";
 import OrderPage from "./pages/orders/OrderPage";
-import OrderSuccess from "../src/components/common/OrderSuccess"; // Order success page
+import OrderSuccess from "./components/common/OrderSuccess";
 import OrderHistory from "./pages/orders/components/OrderHistory";
-export default function App() {
-  // ============================================================
-  // LOGIN TRANSFER FROM FECHZO FOOD (5173)
-  // ============================================================
-  useEffect(() => {
-  const handleLoginTransfer = () => {
-    try {
-      const params = new URLSearchParams(window.location.search);
+import StorePaymentManagement from "./pages/storeAdmin/StorePaymentManagement";
 
-      const token = params.get("token");
-      const userStr = params.get("user"); // already decoded by URLSearchParams
+// ============================================================
+// Helper component to control Header visibility
+// ============================================================
+function AppContent() {
+  const location = useLocation();
 
-      // No transfer parameters
-      if (!token || !userStr) return;
-
-      // Parse the user (NO extra decodeURIComponent)
-      const user = JSON.parse(userStr);
-
-      // Save in Marketplace
-      localStorage.setItem("jwt_token", token);
-      localStorage.setItem("userProfile", JSON.stringify(user));
-
-      // Clean the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      // Notify Header
-      window.dispatchEvent(new Event("auth-changed"));
-
-      console.log("✅ Login transferred successfully:", user);
-    } catch (error) {
-      console.error("❌ Error processing login transfer:", error);
-    }
-  };
-
-  handleLoginTransfer();
-}, []);
+  // Hide Header on all store-admin routes
+  const hideHeader = location.pathname.startsWith("/store-admin");
 
   return (
-    <BrowserRouter>
-      <Header />
+    <>
+      {!hideHeader && <Header />}
 
       <main className="min-h-screen bg-slate-50">
         <Routes>
@@ -104,16 +81,55 @@ export default function App() {
           <Route path="/store-admin/ads" element={<StoreAds />} />
           <Route path="/store-admin/ads/create" element={<AdForm />} />
           <Route path="/store-admin/ads/edit/:id" element={<AdForm />} />
-          <Route
-path="/wishlist"element={<Wishlist />}/>
-          {/* Optional: 404 */}
-          {/* <Route path="*" element={<NotFound />} /> */}
+          <Route path="/store-admin/payments" element={<StorePaymentManagement />} /> {/* ✅ Fixed */}
+
+          {/* ====================== USER ====================== */}
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/orders" element={<OrderHistory />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/order-success" element={<OrderSuccess />} />
         </Routes>
       </main>
+    </>
+  );
+}
+
+export default function App() {
+  // ============================================================
+  // LOGIN TRANSFER FROM FECHZO FOOD (5173)
+  // ============================================================
+  useEffect(() => {
+    const handleLoginTransfer = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+
+        const token = params.get("token");
+        const userStr = params.get("user");
+
+        if (!token || !userStr) return;
+
+        const user = JSON.parse(userStr);
+
+        localStorage.setItem("jwt_token", token);
+        localStorage.setItem("userProfile", JSON.stringify(user));
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        window.dispatchEvent(new Event("auth-changed"));
+
+        console.log("✅ Login transferred successfully:", user);
+      } catch (error) {
+        console.error("❌ Error processing login transfer:", error);
+      }
+    };
+
+    handleLoginTransfer();
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
