@@ -139,13 +139,13 @@ export default function OrderPage() {
   };
 
   // Normalize storeId to string (fixes ObjectId vs string mismatch)
- const getStoreId = (item) => {
-  let id = item?.storeId || item?.store?._id || item?.store;
-  if (id && typeof id === "object") {
-    id = id._id || id.id;
-  }
-  return id ? String(id) : null;
-};
+  const getStoreId = (item) => {
+    let id = item?.storeId || item?.store?._id || item?.store;
+    if (id && typeof id === "object") {
+      id = id._id || id.id;
+    }
+    return id ? String(id) : null;
+  };
 
   const getStoreType = (item) => {
     return item?.storeType || item?.store?.storeType || null;
@@ -254,7 +254,6 @@ export default function OrderPage() {
     const hasDifferentStore = storeIds.some(
       (id) => !id || id !== firstStoreId
     );
-   
     if (hasDifferentStore) {
       alert("All items must be from the same store. Please order separately.");
       return;
