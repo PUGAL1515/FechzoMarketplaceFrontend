@@ -36,7 +36,7 @@ export default function OrderSuccess() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100 flex items-center justify-center px-4">
         <div className="bg-white border border-slate-200 rounded-3xl shadow-xl p-8 text-center max-w-md w-full">
           <div className="w-20 h-20 mx-auto rounded-full bg-orange-50 flex items-center justify-center">
             <Package size={36} className="text-orange-500" />
@@ -83,7 +83,7 @@ export default function OrderSuccess() {
     .join(", ");
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-slate-100 relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-b from-emerald-50 via-slate-50 to-slate-100 relative overflow-hidden">
       {/* Soft decorative blobs */}
       <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-200/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       <div className="absolute top-20 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl translate-x-1/3 pointer-events-none" />
@@ -117,12 +117,12 @@ export default function OrderSuccess() {
         {/* ========== SUCCESS HERO ========== */}
         <div className="bg-white rounded-3xl border border-emerald-100 shadow-xl shadow-emerald-100/50 p-7 sm:p-10 text-center relative overflow-hidden">
           {/* Top green accent bar */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400" />
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-linear-to-r from-emerald-400 via-emerald-500 to-teal-400" />
 
           {/* Animated check circle */}
           <div className="relative mx-auto w-24 h-24 sm:w-28 sm:h-28">
             <div className="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-40" />
-            <div className="relative w-full h-full rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+            <div className="relative w-full h-full rounded-full bg-linear-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-200">
               <CheckCircle2 size={52} className="text-white" strokeWidth={2.5} />
             </div>
           </div>
@@ -247,7 +247,10 @@ export default function OrderSuccess() {
 
           <div className="divide-y divide-slate-100">
             {items.map((item, index) => (
-              <div key={index} className="p-4 sm:p-5 flex gap-4 hover:bg-slate-50/50 transition">
+              <div
+                key={index}
+                className="p-4 sm:p-5 flex gap-4 hover:bg-slate-50/50 transition"
+              >
                 <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden shrink-0 shadow-sm">
                   <img
                     src={
@@ -353,7 +356,7 @@ export default function OrderSuccess() {
           <button
             type="button"
             onClick={() => navigate("/orders")}
-            className="h-13 rounded-2xl bg-gradient-to-r from-[#2874f0] to-[#1a5dc8] text-white font-bold text-sm flex items-center justify-center gap-2.5 hover:opacity-95 transition shadow-lg shadow-blue-200"
+            className="h-13 rounded-2xl bg-linear-to-r from-[#2874f0] to-[#1a5dc8] text-white font-bold text-sm flex items-center justify-center gap-2.5 hover:opacity-95 transition shadow-lg shadow-blue-200"
           >
             <ShoppingBag size={18} />
             View My Orders
