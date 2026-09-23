@@ -254,7 +254,6 @@ export default function OrderPage() {
     const hasDifferentStore = storeIds.some(
       (id) => !id || id !== firstStoreId
     );
-
     if (hasDifferentStore) {
       alert("All items must be from the same store. Please order separately.");
       return;
