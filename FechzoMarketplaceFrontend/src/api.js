@@ -12,11 +12,13 @@ const api = axios.create({
 });
 
 // ============================================================
-// Automatically attach token
+// Automatically attach token (User + Store)
 // ============================================================
 api.interceptors.request.use(
   (config) => {
+    // Priority: storeToken → authToken → jwt_token → token
     const token =
+      localStorage.getItem("storeToken") ||
       localStorage.getItem("authToken") ||
       localStorage.getItem("jwt_token") ||
       localStorage.getItem("token");
@@ -37,10 +39,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Clear both user and store tokens
+      localStorage.removeItem("storeToken");
       localStorage.removeItem("authToken");
       localStorage.removeItem("jwt_token");
       localStorage.removeItem("token");
       localStorage.removeItem("userProfile");
+      localStorage.removeItem("store");
+      localStorage.removeItem("storeId");
+
       window.dispatchEvent(new Event("auth-changed"));
     }
     return Promise.reject(error);
