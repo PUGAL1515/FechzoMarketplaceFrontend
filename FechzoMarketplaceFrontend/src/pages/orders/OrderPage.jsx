@@ -29,6 +29,17 @@ export default function OrderPage() {
   const [savingAddress, setSavingAddress] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
 
+  // ---------- OFFER FROM CART (navigate state) ----------
+  const [appliedOffer, setAppliedOffer] = useState(
+    location.state?.appliedOffer || null
+  );
+  const [offerDiscount, setOfferDiscount] = useState(
+    Number(location.state?.offerDiscount) || 0
+  );
+  const [freeDelivery, setFreeDelivery] = useState(
+    !!location.state?.freeDelivery
+  );
+
   // ---------- FETCH USER + ADDRESSES ----------
   useEffect(() => {
     const init = async () => {
@@ -155,11 +166,48 @@ export default function OrderPage() {
     return total + getPrice(item) * (Number(item?.quantity) || 1);
   }, 0);
 
-  const deliveryCharge = 0;
-  const totalAmount = subtotal + deliveryCharge;
+  const deliveryCharge = freeDelivery ? 0 : 0;
+  const discountAmount = Number(offerDiscount) || 0;
+  const totalAmount = Math.max(0, subtotal - discountAmount + deliveryCharge);
 
   const selectedAddress = addresses.find((a) => a._id === selectedAddressId);
   const isAddressSelected = !!selectedAddress;
+
+  // ---------- If opened via Buy Now (no cart offer), optionally refetch offer ----------
+  useEffect(() => {
+    // Already have offer from cart navigate state
+    if (location.state?.appliedOffer || location.state?.offerDiscount) {
+      return;
+    }
+
+    const fetchOfferForBuyNow = async () => {
+      if (!orderItems.length) return;
+
+      const firstStoreId = getStoreId(orderItems[0]);
+      if (!firstStoreId || subtotal <= 0) return;
+
+      try {
+        const productIds = orderItems
+          .map((i) => i._id || i.productId)
+          .filter(Boolean);
+
+        const res = await api.post("/marketplace/store/offers/applicable", {
+          storeId: firstStoreId,
+          subtotal,
+          productIds,
+        });
+
+        const data = res.data?.data;
+        setAppliedOffer(data?.appliedOffer || null);
+        setOfferDiscount(Number(data?.discountAmount) || 0);
+        setFreeDelivery(!!data?.freeDelivery);
+      } catch (err) {
+        console.error("OrderPage offer fetch error:", err);
+      }
+    };
+
+    fetchOfferForBuyNow();
+  }, [orderItems, subtotal, location.state]);
 
   // ---------- SAVE / UPDATE ADDRESS ----------
   const handleSaveAddress = async (formData) => {
@@ -285,6 +333,10 @@ export default function OrderPage() {
       },
       paymentMethod,
       customerNote: "",
+      // ---------- OFFER FIELDS ----------
+      appliedOfferId: appliedOffer?._id || null,
+      discountAmount: discountAmount || 0,
+      couponCode: appliedOffer?.couponCode || null,
     };
 
     setPlacingOrder(true);
@@ -628,9 +680,34 @@ export default function OrderPage() {
                   </span>
                 </div>
 
+                {/* OFFER DISCOUNT */}
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">
+                      Offer
+                      {appliedOffer?.badgeText
+                        ? ` (${appliedOffer.badgeText})`
+                        : ""}
+                    </span>
+                    <span className="text-emerald-600 font-medium">
+                      - ₹{discountAmount.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                )}
+
+                {appliedOffer && discountAmount > 0 && (
+                  <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
+                    <p className="text-xs font-semibold text-indigo-700">
+                      {appliedOffer.title || "Offer applied"}
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Delivery</span>
-                  <span className="text-emerald-600 font-semibold">FREE</span>
+                  <span className="text-emerald-600 font-semibold">
+                    {freeDelivery ? "FREE" : "FREE"}
+                  </span>
                 </div>
 
                 <div className="border-t border-dashed border-slate-300 pt-4">
