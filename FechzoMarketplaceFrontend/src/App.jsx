@@ -32,6 +32,7 @@ import OrderPage from "./pages/orders/OrderPage";
 import OrderSuccess from "./components/common/OrderSuccess";
 import OrderHistory from "./pages/orders/components/OrderHistory";
 import StorePaymentManagement from "./pages/storeAdmin/StorePaymentManagement";
+import StoreOffers from "./pages/storeAdmin/StoreOffers";
 
 // ============================================================
 // Helper component to control Header visibility
@@ -82,6 +83,7 @@ function AppContent() {
           <Route path="/store-admin/ads/create" element={<AdForm />} />
           <Route path="/store-admin/ads/edit/:id" element={<AdForm />} />
           <Route path="/store-admin/payments" element={<StorePaymentManagement />} /> {/* ✅ Fixed */}
+          <Route path="/store-admin/offers" element={<StoreOffers />} />  
 
           {/* ====================== USER ====================== */}
           <Route path="/wishlist" element={<Wishlist />} />
