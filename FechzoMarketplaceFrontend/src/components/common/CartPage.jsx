@@ -482,10 +482,154 @@ export default function CartPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Summary */}
+
+              <div className="p-5 space-y-4">
+
+                {/* PRICE */}
+
+                <div className="flex justify-between text-sm">
+
+                  <span className="text-slate-600">
+                    Price ({itemCount}{" "}
+                    {itemCount === 1
+                      ? "item"
+                      : "items"}
+                    )
+                  </span>
+
+                  <span className="text-slate-800">
+                    ₹{mrpTotal.toLocaleString("en-IN")}
+                  </span>
+
+                </div>
+
+                {/* DISCOUNT */}
+
+                {totalDiscount > 0 && (
+                  <div className="flex justify-between text-sm">
+
+                    <span className="text-slate-600">
+                      Discount
+                    </span>
+
+                    <span className="text-emerald-600 font-medium">
+                      - ₹
+                      {totalDiscount.toLocaleString(
+                        "en-IN"
+                      )}
+                    </span>
+
+                  </div>
+                )}
+
+                {/* DELIVERY */}
+
+                <div className="flex justify-between text-sm">
+
+                  <span className="text-slate-600">
+                    Delivery
+                  </span>
+
+                  <span className="text-emerald-600 font-semibold">
+                    FREE
+                  </span>
+
+                </div>
+
+                {/* TOTAL */}
+
+                <div className="border-t border-dashed border-slate-300 pt-4">
+
+                  <div className="flex justify-between items-center">
+
+                    <span className="text-base font-bold text-slate-900">
+                      Total Amount
+                    </span>
+
+                    <span className="text-xl font-bold text-slate-900">
+                      ₹
+                      {finalCartTotal.toLocaleString(
+                        "en-IN"
+                      )}
+                    </span>
+
+                  </div>
+
+                </div>
+
+                {/* SAVINGS */}
+
+                {totalDiscount > 0 && (
+                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+
+                    <Tag
+                      size={15}
+                      className="text-emerald-600"
+                    />
+
+                    <span className="text-xs font-semibold text-emerald-700">
+                      You are saving ₹
+                      {totalDiscount.toLocaleString(
+                        "en-IN"
+                      )}{" "}
+                      on this order
+                    </span>
+
+                  </div>
+                )}
+
+                {/* CHECKOUT */}
+
+               <button
+  type="button"
+  onClick={() => {
+    const token = localStorage.getItem("jwt_token");
+
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    navigate("/order");
+  }}
+  className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-[#ff9f00] hover:bg-[#f39200] text-white font-bold text-sm transition-all shadow-sm"
+>
+  Proceed to Order
+  <ArrowRight size={17} />
+</button>
+                {/* CONTINUE */}
+                <Link
+                  to="/"
+                  className="w-full h-10 flex items-center justify-center rounded-lg border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 transition"
+                >
+                  Continue Shopping
+                </Link>
+              </div>
+              {/* SAFE PAYMENT */}
+              <div className="px-5 py-4 bg-slate-50 border-t border-slate-200">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck
+                    size={18}
+                    className="text-emerald-600"
+                  />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700">
+                      Safe and Secure Payments
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      100% secure checkout
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
+        {/* ======================================================
+            MOBILE CONTINUE SHOPPING
+        ======================================================= */}
         <div className="sm:hidden mt-5">
           <Link
             to="/"

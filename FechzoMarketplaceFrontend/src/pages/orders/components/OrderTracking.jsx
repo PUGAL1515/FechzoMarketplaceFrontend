@@ -177,7 +177,6 @@ export default function OrderTracking({ order }) {
           </div>
         </div>
       </div>
-
       {/* SPECIAL STATUS */}
       {specialStatus && (
         <div className="mb-5 rounded-xl bg-white p-5 shadow-sm">
@@ -206,7 +205,6 @@ export default function OrderTracking({ order }) {
           </div>
         </div>
       )}
-
       {/* TRACKING TIMELINE */}
       {!specialStatus && (
         <div className="mb-5 rounded-xl bg-white p-5 shadow-sm">
@@ -263,7 +261,6 @@ export default function OrderTracking({ order }) {
                   >
                     <Icon className="h-5 w-5" />
                   </div>
-
                   {/* CONTENT */}
                   <div className="pt-0.5">
                     <h3

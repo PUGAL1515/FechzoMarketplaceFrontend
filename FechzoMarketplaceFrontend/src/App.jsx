@@ -6,7 +6,7 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import Header from "./components/common/Header";
+import Header from "./components/common/Headers/Header";
 import CartPage from "./components/common/CartPage";
 import MarketplaceHome from "./marketplace/MarketplaceHome";
 
