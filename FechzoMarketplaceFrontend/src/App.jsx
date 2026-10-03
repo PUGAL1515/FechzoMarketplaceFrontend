@@ -33,6 +33,7 @@ import OrderSuccess from "./components/common/OrderSuccess";
 import OrderHistory from "./pages/orders/components/OrderHistory";
 import StorePaymentManagement from "./pages/storeAdmin/StorePaymentManagement";
 import StoreOffers from "./pages/storeAdmin/StoreOffers";
+import ReturnOrderManagement from "./pages/storeAdmin/returns/ReturnOrderManagement";
 
 // ============================================================
 // Helper component to control Header visibility
@@ -91,6 +92,10 @@ function AppContent() {
           <Route path="/order" element={<OrderPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/order-success" element={<OrderSuccess />} />
+          <Route
+  path="/store-admin/returns"
+  element={<ReturnOrderManagement />}
+/>
         </Routes>
       </main>
     </>

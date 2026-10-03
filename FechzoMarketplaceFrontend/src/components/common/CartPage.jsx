@@ -6,6 +6,7 @@ import {
   Trash2,
   ShoppingBag,
   ArrowRight,
+  Tag,
   ShieldCheck,
 } from "lucide-react";
 import { useCart } from "../../context/CartContext";
