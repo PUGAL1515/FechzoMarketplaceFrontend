@@ -13,14 +13,18 @@ import {
   ChevronDown,
   CircleCheck,
   UserRound,
-  CreditCard,          // ← added
+  CreditCard,
+  Percent,
+  Megaphone,              // ← added for Ads
 } from "lucide-react";
 
 import StoreProducts from "./StoreProducts";
 import AdminOrders from "./Order/AdminOrders";
 import StoreDashboard from "./StoreDashboard";
 import StoreSettings from "./StoreSettings";
-import StorePaymentManagement from "./StorePaymentManagement"; // ← added
+import StorePaymentManagement from "./StorePaymentManagement";
+import StoreOffers from "./StoreOffers";
+import StoreAds from "./StoreAds";           // ← added
 
 export default function StoreAdmin() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -160,9 +164,19 @@ export default function StoreAdmin() {
       icon: ShoppingBag,
     },
     {
-      id: "payments",                 // ← added
+      id: "payments",
       label: "Payments",
       icon: CreditCard,
+    },
+    {
+      id: "offers",
+      label: "Offers",
+      icon: Percent,
+    },
+    {
+      id: "ads",                     // ← added
+      label: "Ads",
+      icon: Megaphone,
     },
     {
       id: "categories",
@@ -193,8 +207,14 @@ export default function StoreAdmin() {
       case "orders":
         return "Orders";
 
-      case "payments":                 // ← added
+      case "payments":
         return "Payment Management";
+
+      case "offers":
+        return "Offers";
+
+      case "ads":                    // ← added
+        return "Ads";
 
       case "categories":
         return "Categories";
@@ -234,9 +254,17 @@ export default function StoreAdmin() {
       return <AdminOrders />;
     }
 
-    // ====================== PAYMENTS ======================
     if (activePage === "payments") {
       return <StorePaymentManagement />;
+    }
+
+    if (activePage === "offers") {
+      return <StoreOffers />;
+    }
+
+    // ====================== ADS ======================
+    if (activePage === "ads") {
+      return <StoreAds />;
     }
 
     if (activePage === "categories") {
